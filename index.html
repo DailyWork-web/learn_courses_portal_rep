@@ -272,13 +272,41 @@
         window.onload = () => {
             document.getElementById('sidebar').classList.add('hidden');
         };
-            // НАСТРОЙКИ РЕПОЗИТОРИЯ
+        // НАСТРОЙКИ РЕПОЗИТОРИЯ
         const CONFIG = {
             username: 'ВАШ_ЛОГИН_GITHUB',
             repo: 'НАЗВАНИЕ_РЕПОЗИТОРИЯ',
-            branch: 'main' // или master
+            branch: 'main' 
         };
 
+        // Функция для загрузки списка КУРСОВ (все папки в корне)
+        async function loadCoursesToSidebar() {
+    const list = document.getElementById('courses-list');
+    try {
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/`);
+        const items = await response.json();
+        
+        // Фильтруем: берем ВСЕ папки, кроме скрытых (начинающихся с точки)
+        const courses = items.filter(item => item.type === 'dir' && !item.name.startsWith('.'));
+        
+        list.innerHTML = '';
+        courses.forEach(course => {
+            const btn = document.createElement('button');
+            btn.className = 'course-btn';
+            
+            // Теперь здесь отображается чистое название папки
+            btn.innerText = course.name; 
+            
+            btn.onclick = () => openCourse(course.name);
+            list.appendChild(btn);
+        });
+    } catch (e) {
+        console.error("Ошибка загрузки списка курсов. Проверьте настройки CONFIG.");
+        list.innerHTML = '<p style="font-size:10px; padding:10px;">Ошибка доступа к API</p>';
+    }
+}
+
+        // Функция для загрузки МОДУЛЕЙ внутри выбранного курса
         async function openCourse(courseFolderName) {
             if (window.innerWidth <= 768) toggleSidebar();
     
@@ -293,27 +321,25 @@
             container.innerHTML = '<p style="color:var(--text-body)">Загрузка модулей...</p>';
 
             try {
-                // 1. Получаем список содержимого папки курса через GitHub API
                 const apiUrl = `https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseFolderName)}`;
                 const response = await fetch(apiUrl);
                 const items = await response.json();
 
-                // Фильтруем только папки (это наши модули)
+                // Берем все папки внутри курса
                 const modules = items.filter(item => item.type === 'dir');
         
-        container.innerHTML = ''; // Очищаем индикатор загрузки
+                container.innerHTML = '';
 
                 if (modules.length === 0) {
-                    container.innerHTML = '<p>В этом курсе пока нет модулей.</p>';
+                    container.innerHTML = '<p>В этой папке нет модулей.</p>';
                     return;
                 }
 
-                // 2. Для каждой папки модуля ищем текстовый файл
                 for (const [index, mod] of modules.entries()) {
                     const infoUrl = `https://raw.githubusercontent.com/${CONFIG.username}/${CONFIG.repo}/${CONFIG.branch}/${encodeURIComponent(mod.path)}/info.txt`;
             
-                    let title = mod.name; // Запасное название
-                    let description = "Описание не найдено.";
+                    let title = mod.name; 
+                    let description = "Описание не найдено (добавьте info.txt).";
 
                     try {
                         const infoRes = await fetch(infoUrl);
@@ -324,60 +350,34 @@
                             description = lines[1] || description;
                         }
                     } catch (e) {
-                console.error("Не удалось прочитать info.txt для " + mod.name);
+                        console.warn("Файл info.txt отсутствует в " + mod.name);
                     }
 
-                    // 3. Создаем карточку модуля
                     const card = document.createElement('div');
                     card.className = 'pres-card';
                     card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
             
                     card.innerHTML = `
-                        <div class="pres-img-box">📦</div>
+                        <div class="pres-img-box">📁</div>
                         <div>
                             <h3 style="margin:0 0 5px 0">${title}</h3>
                             <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${description}</p>
                         </div>
-                        <button class="start-btn" onclick="window.location.href='https://github.com/${CONFIG.username}/${CONFIG.repo}/tree/${CONFIG.branch}/${encodeURIComponent(mod.path)}'">
-                            Открыть
+                        <button class="start-btn" onclick="window.open('https://github.com/${CONFIG.username}/${CONFIG.repo}/tree/${CONFIG.branch}/${encodeURIComponent(mod.path)}', '_blank')">
+                            Открыть материалы
                         </button>
                     `;
                     container.appendChild(card);
                 }
             } catch (error) {
-                container.innerHTML = '<p style="color:var(--primary)">Ошибка загрузки данных. Проверьте настройки CONFIG.</p>';
-                console.error(error);
+                container.innerHTML = '<p style="color:var(--primary)">Не удалось загрузить модули.</p>';
             }
         }
 
-        // Функция для автоматического формирования меню курсов в сайдбаре
-        async function loadCoursesToSidebar() {
-            const list = document.getElementById('courses-list');
-            try {
-                const response = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/`);
-                const items = await response.json();
-        
-                // Находим все папки, название которых начинается на "Курс"
-                const courses = items.filter(item => item.type === 'dir' && item.name.startsWith('Курс'));
-        
-                list.innerHTML = '';
-                courses.forEach(course => {
-                    const btn = document.createElement('button');
-                    btn.className = 'course-btn';
-                    btn.innerText = course.name;
-                    btn.onclick = () => openCourse(course.name);
-                    list.appendChild(btn);
-                });
-            } catch (e) {
-                console.error("Ошибка загрузки списка курсов");
-            }
-        }
-
-        // Запускаем при загрузке
-        window.addEventListener('DOMContentLoaded', () => {
+        window.onload = () => {
             loadCoursesToSidebar();
             document.getElementById('sidebar').classList.add('hidden');
-        });
+        };
     </script>
 </body>
 </html>
