@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Portal Premium | Final Adaptive</title>
+    <title>Study Portal Premium | Final Design</title>
     <style>
         :root {
-            --bg-main: #121212;
-            --bg-sidebar: #1a1a1a;
-            --bg-card: #1e1e1e;
+            --bg-main: #0a0a0a;
+            --bg-sidebar: #121212;
+            --bg-card: rgba(30, 30, 30, 0.4);
             --text-title: #ffffff;
             --text-body: #999999;
             --primary: #800020; 
             --primary-hover: #a20029;
-            --border: #2a2a2a;
-            --line-color: #333333;
-            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --border: rgba(255, 255, 255, 0.1);
+            --line-color: #222222;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --sidebar-width: 280px;
         }
 
         [data-theme="light"] {
-            --bg-main: #d1d1d1;
-            --bg-sidebar: #c4c4c4;
-            --bg-card: #e0e0e0;
-            --text-title: #2d2d2d;
-            --text-body: #555555;
-            --border: #a0a0a0;
-            --line-color: #999999;
+            --bg-main: #e0e0e2;
+            --bg-sidebar: #f0f0f2;
+            --bg-card: rgba(255, 255, 255, 0.5);
+            --text-title: #1d1d1f;
+            --text-body: #555557;
+            --border: rgba(0, 0, 0, 0.1);
+            --line-color: #d2d2d7;
         }
 
         * { box-sizing: border-box; }
         
         body {
             margin: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg-main);
             color: var(--text-title);
             display: flex;
@@ -43,223 +43,166 @@
             transition: background-color 0.4s;
         }
 
-        .separator {
-            height: 1px;
-            background-color: var(--line-color);
-            width: 100%;
-            margin: 15px 0;
+        /* --- BACKGROUND ENGINE --- */
+        .bg-wrapper {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
         }
 
-        /* --- САЙДБАР (SIDEBAR) --- */
-        .sidebar-container {
-            display: flex;
-            position: relative;
-            z-index: 1000;
-            height: 100%;
-            flex-shrink: 0;
+        .shape {
+            position: absolute;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            filter: blur(80px);
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: move 10s infinite alternate ease-in-out;
         }
 
+        .shape-1 { width: 500px; height: 500px; top: -10%; left: -10%; animation-duration: 6s; }
+        .shape-2 { width: 400px; height: 400px; bottom: -10%; right: -10%; animation-duration: 8s; animation-delay: -2s; }
+        .shape-3 { width: 300px; height: 300px; top: 40%; left: 60%; animation-duration: 5s; opacity: 0.2; }
+        .shape-4 { width: 450px; height: 450px; top: 10%; left: 30%; animation-duration: 12s; animation-delay: -4s; opacity: 0.15; }
+
+        @keyframes move {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(60px, 40px) scale(1.1) rotate(45deg); }
+            100% { transform: translate(-40px, 80px) scale(0.9) rotate(90deg); }
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar-container { display: flex; position: relative; z-index: 2000; height: 100%; flex-shrink: 0; }
         #sidebar {
             width: var(--sidebar-width);
             background-color: var(--bg-sidebar);
-            border-right: 2px solid var(--border);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             transition: var(--transition);
-            will-change: margin-left;
+            backdrop-filter: blur(10px);
         }
-
-        /* Состояние по умолчанию - ЗАКРЫТО */
-        #sidebar.hidden {
-            margin-left: calc(-1 * var(--sidebar-width));
-        }
+        #sidebar.hidden { margin-left: calc(-1 * var(--sidebar-width)); }
 
         .toggle-tab {
-            position: absolute;
-            right: -42px;
-            top: 30px;
-            width: 42px;
-            height: 42px;
-            background-color: var(--bg-sidebar);
-            border: 2px solid var(--border);
-            border-left: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border-radius: 0 10px 10px 0;
-            color: var(--text-title);
-            font-weight: bold;
-            transition: var(--transition);
-            z-index: 1001;
+            position: absolute; right: -42px; top: 25px; width: 42px; height: 42px;
+            background-color: var(--bg-sidebar); border: 1px solid var(--border); border-left: none;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            border-radius: 0 10px 10px 0; color: var(--text-title); font-weight: bold; transition: var(--transition);
         }
 
-        .sidebar-content {
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            width: var(--sidebar-width);
-            height: 100%;
+        .sidebar-content { padding: 40px 15px; width: var(--sidebar-width); height: 100%; display: flex; flex-direction: column; }
+        .sidebar-content h2 { font-size: 0.7rem; color: var(--primary); letter-spacing: 4px; text-align: center; margin-bottom: 40px; text-transform: uppercase; }
+
+        .sidebar-nav-item {
+            width: 100%; background: transparent; border: none; color: var(--text-title);
+            padding: 18px 15px; text-align: left; font-size: 0.85rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--line-color); transition: 0.3s;
         }
+        .sidebar-nav-item:hover { color: var(--primary); background: rgba(255,255,255,0.03); }
 
-        .sidebar-content h2 {
-            font-size: 1rem;
-            color: var(--primary);
-            margin: 0 0 30px 0;
-            letter-spacing: 3px;
-            text-align: center;
-            border-bottom: 1px solid var(--line-color);
-            padding-bottom: 15px;
-        }
+        #courses-list { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; background: rgba(0,0,0,0.1); }
+        #courses-list.open { max-height: 500px; }
+        .course-btn { width: 100%; padding: 12px 20px; background: transparent; border: none; color: var(--text-body); text-align: left; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .course-btn:hover { color: var(--primary); padding-left: 25px; }
 
-        .nav-list { flex-grow: 1; overflow-y: auto; }
+        .arrow-icon { font-size: 0.6rem; transition: transform 0.3s; opacity: 0.5; }
+        .rotate { transform: rotate(180deg); }
 
-        .course-btn {
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-body);
-            text-align: left;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.9rem;
-        }
-
-        .course-btn:hover {
-            border-left: 3px solid var(--primary);
-            background: rgba(128, 0, 32, 0.05);
-            color: var(--text-title);
-        }
-
-        /* ТЕМА */
-        .theme-section { margin-top: auto; padding-top: 10px; }
-        .switch-container { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
-
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
+        /* --- SWITCH --- */
+        .theme-section { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--line-color); }
+        .switch-container { display: flex; align-items: center; justify-content: space-between; padding: 10px 5px; }
+        .switch { position: relative; width: 34px; height: 18px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #555; transition: .4s; border-radius: 20px; border: 1px solid var(--border);
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 14px; width: 14px;
-            left: 2px; bottom: 2px; background-color: #fff; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: #fff; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(16px); }
 
-        /* --- ОСНОВНОЙ КОНТЕНТ --- */
-        #main-content {
-            flex-grow: 1;
-            padding: 40px;
-            overflow-y: auto;
-            transition: var(--transition);
-            width: 100%;
-            position: relative;
+        /* --- CONTENT --- */
+        #main-content { flex-grow: 1; padding: 40px; overflow: hidden; width: 100%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 10; }
+
+        .hero-container {
+            position: relative; text-align: center; padding: 60px; border: 1px solid var(--border);
+            background: var(--bg-card); backdrop-filter: blur(20px); border-radius: 30px;
+            max-width: 800px; animation: containerFade 1.2s ease;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
         }
 
-        #welcome-screen {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+        .hero-container:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
-        #welcome-screen h1 { font-size: clamp(2.5rem, 8vw, 5rem); margin: 0; letter-spacing: -2px; }
-        #welcome-screen p { color: var(--text-body); max-width: 550px; line-height: 1.8; }
+        .hero-container h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); margin: 0; letter-spacing: -3px; font-weight: 800; text-transform: uppercase; }
+        .hero-container h1 span { color: var(--primary); }
+        .accent-line { height: 3px; width: 60px; background: var(--primary); margin: 25px auto; }
 
-        #course-view { display: none; max-width: 1100px; margin: 0 auto; width: 100%; }
-
-        /* --- КАРТОЧКИ С АНИМАЦИЕЙ --- */
-        .pres-card {
-            display: grid;
-            grid-template-columns: 160px 1fr 200px;
-            background: var(--bg-card);
-            border-radius: 4px;
-            padding: 25px;
-            margin-bottom: 20px;
-            align-items: center;
-            gap: 25px;
-            border: 1px solid var(--border);
-            opacity: 0; /* Начальное состояние для анимации */
+        /* --- CARDS --- */
+        #course-view { display: none; max-width: 1000px; margin: 0 auto; width: 100%; height: 100%; overflow-y: auto; padding: 40px 20px; }
+        
+        .pres-card { 
+            display: grid; grid-template-columns: 140px 1fr 180px; background: var(--bg-card); 
+            padding: 25px; margin-bottom: 20px; align-items: center; gap: 25px; 
+            border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(15px);
+            transition: all 0.3s ease; opacity: 0;
         }
 
-        .pres-img-box {
-            height: 100px;
-            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+        .pres-card:hover {
+            transform: scale(1.02) translateX(10px);
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
         }
 
-        .pres-info h3 { margin: 0 0 8px 0; color: var(--text-title); font-size: 1.2rem; }
-        .pres-info p { margin: 0; color: var(--text-body); font-size: 0.9rem; }
-
-        .start-btn {
-            background: var(--primary);
-            color: white; border: none; padding: 15px;
-            cursor: pointer; font-weight: bold; text-transform: uppercase;
-            letter-spacing: 1px; transition: 0.3s;
+        .pres-img-box { height: 90px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border-radius: 15px; transition: 0.3s; }
+        
+        .start-btn { 
+            background: var(--primary); color: white; border: none; padding: 14px; cursor: pointer; font-weight: 700; 
+            text-transform: uppercase; transition: all 0.3s; border-radius: 12px; font-size: 0.75rem; letter-spacing: 1px;
         }
+        .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(128, 0, 32, 0.4); }
 
-        .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-
-        .back-link {
-            color: var(--text-body); font-size: 0.8rem; cursor: pointer;
-            margin-bottom: 20px; display: inline-block; border-bottom: 1px solid var(--primary);
-        }
-
-        /* --- КЛЮЧЕВЫЕ АНИМАЦИИ --- */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- АДАПТИВНОСТЬ --- */
-        @media (max-width: 1024px) {
-            .pres-card { grid-template-columns: 120px 1fr; }
-            .start-btn { grid-column: 1 / -1; }
-        }
+        @keyframes containerFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 768px) {
-            .sidebar-container {
-                position: fixed; /* Фиксируем поверх контента на мобильных */
-                height: 100%;
-            }
-            #sidebar.hidden { margin-left: calc(-1 * var(--sidebar-width)); }
-            
-            #main-content { padding: 80px 20px 20px 20px; }
-            .pres-card { grid-template-columns: 1fr; text-align: center; gap: 15px; }
-            .pres-img-box { width: 80px; height: 80px; margin: 0 auto; font-size: 2rem; }
-            #welcome-screen h1 { font-size: 3rem; }
+            .sidebar-container { position: fixed; height: 100%; }
+            .pres-card { grid-template-columns: 1fr; text-align: center; padding: 30px; }
+            .pres-img-box { margin: 0 auto; width: 80px; }
         }
     </style>
 </head>
-<body data-theme="dark">
+<body>
+
+    <div class="bg-wrapper">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
 
     <div class="sidebar-container">
         <aside id="sidebar" class="hidden">
             <div class="sidebar-content">
-                <h2>PORTAL</h2>
-                <nav class="nav-list">
+                <h2>Portal Premium</h2>
+                <button class="sidebar-nav-item" onclick="goHome(); toggleSidebar();">На главную</button>
+                <button class="sidebar-nav-item" onclick="toggleCourses()">Курсы <span id="arrow" class="arrow-icon">▼</span></button>
+                <div id="courses-list">
                     <button class="course-btn" onclick="openCourse('Курс №1')">Курс №1</button>
                     <button class="course-btn" onclick="openCourse('Курс №2')">Курс №2</button>
                     <button class="course-btn" onclick="openCourse('Курс №3')">Курс №3</button>
                     <button class="course-btn" onclick="openCourse('Курс №4')">Курс №4</button>
-                </nav>
-
+                </div>
                 <div class="theme-section">
-                    <div class="separator"></div>
                     <div class="switch-container">
+                        <span id="theme-text" style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase; opacity: 0.6;">Dark Mode</span>
                         <label class="switch">
                             <input type="checkbox" id="theme-toggle" onchange="updateTheme()">
                             <span class="slider"></span>
                         </label>
-                        <span id="theme-text" style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">Темная тема</span>
                     </div>
                 </div>
             </div>
@@ -269,87 +212,172 @@
 
     <main id="main-content">
         <div id="welcome-screen">
-            <h1>Welcome</h1>
-            <div class="separator" style="width: 50px; background: var(--primary); height: 3px;"></div>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Плавный переход к обучению начинается здесь.</p>
+            <div class="hero-container">
+                <h1>Study<span>Portal</span></h1>
+                <div class="accent-line"></div>
+                <p style="color: var(--text-body); font-size: 1.1rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">Ваше пространство для обучения нового поколения. Используйте меню слева для выбора образовательного трека.</p>
+                <div style="font-size: 0.6rem; color: var(--primary); letter-spacing: 4px; font-weight: bold; margin-top: 40px; text-transform: uppercase; opacity: 0.7;">Engineered for Excellence</div>
+            </div>
         </div>
 
         <div id="course-view">
-            <span class="back-link" onclick="goHome()">ВЕРНУТЬСЯ НА ГЛАВНУЮ</span>
-            <h1 id="course-header" style="margin-top: 10px;">Название курса</h1>
-            <div class="separator" style="margin-bottom: 40px;"></div>
+            <h1 id="course-header" style="margin: 0 0 40px 0; font-size: 2.5rem; letter-spacing: -1px;">Курс</h1>
             <div id="cards-container"></div>
         </div>
     </main>
 
     <script>
-        // Функция открытия/закрытия панели
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('sidebar-icon');
-            
             sidebar.classList.toggle('hidden');
-            
-            // Если панель скрыта - символ ❯, если открыта - ❮
             icon.innerText = sidebar.classList.contains('hidden') ? '❯' : '❮';
         }
 
-        // Функция смены темы
-        function updateTheme() {
-            const isLight = document.getElementById('theme-toggle').checked;
-            const text = document.getElementById('theme-text');
-            document.body.setAttribute('data-theme', isLight ? 'light' : 'dark');
-            text.innerText = isLight ? 'Светлая тема' : 'Темная тема';
+        function toggleCourses() {
+            const list = document.getElementById('courses-list');
+            const arrow = document.getElementById('arrow');
+            list.classList.toggle('open');
+            arrow.classList.toggle('rotate');
         }
 
-        // Функция отображения карточек курса
-        function openCourse(name) {
-            // На мобильных устройствах (до 768px) закрываем панель после выбора
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.add('hidden');
-                document.getElementById('sidebar-icon').innerText = '❯';
-            }
+        function updateTheme() {
+            const isLight = document.getElementById('theme-toggle').checked;
+            document.body.setAttribute('data-theme', isLight ? 'light' : 'dark');
+            document.getElementById('theme-text').innerText = isLight ? 'Light Mode' : 'Dark Mode';
+        }
 
+        function openCourse(name) {
+            if (window.innerWidth <= 768) toggleSidebar();
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('course-view').style.display = 'block';
             document.getElementById('course-header').innerText = name;
-
             const container = document.getElementById('cards-container');
-            container.innerHTML = ''; // Очистка перед загрузкой
-            
+            container.innerHTML = '';
             const icons = ['📖', '📑', '🔬'];
-
-            // Создаем карточки с задержкой анимации
             for(let i = 1; i <= 3; i++) {
                 const card = document.createElement('div');
                 card.className = 'pres-card';
-                // Важно: анимация прописывается здесь, чтобы она срабатывала при каждом входе
-                card.style.animation = `fadeInUp 0.5s ease forwards ${i * 0.15}s`;
-                
-                card.innerHTML = `
-                    <div class="pres-img-box">${icons[i-1]}</div>
-                    <div class="pres-info">
-                        <h3>Лекция модуля №${i}</h3>
-                        <p>Системный разбор тем в рамках "${name}". Нажмите кнопку для перехода к материалам.</p>
-                    </div>
-                    <button class="start-btn">Начать обучение</button>
-                `;
+                card.style.animation = `containerFade 0.6s ease forwards ${i * 0.1}s`;
+                card.innerHTML = `<div class="pres-img-box">${icons[i-1]}</div><div><h3 style="margin:0 0 5px 0">Модуль №${i}</h3><p style="margin:0; font-size:0.85rem; color:var(--text-body)">Прогрессивные методики изучения.</p></div><button class="start-btn">Начать обучение</button>`;
                 container.appendChild(card);
             }
         }
 
-        // Возврат на главный экран
         function goHome() {
-            document.getElementById('welcome-screen').style.display = 'flex';
+            document.getElementById('welcome-screen').style.display = 'block';
             document.getElementById('course-view').style.display = 'none';
         }
 
-        // Гарантируем закрытое состояние при загрузке (доп. страховка)
         window.onload = () => {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.add('hidden');
-            document.getElementById('sidebar-icon').innerText = '❯';
+            document.getElementById('sidebar').classList.add('hidden');
         };
+            // НАСТРОЙКИ РЕПОЗИТОРИЯ
+        const CONFIG = {
+            username: 'ВАШ_ЛОГИН_GITHUB',
+            repo: 'НАЗВАНИЕ_РЕПОЗИТОРИЯ',
+            branch: 'main' // или master
+        };
+
+        async function openCourse(courseFolderName) {
+            if (window.innerWidth <= 768) toggleSidebar();
+    
+            const welcome = document.getElementById('welcome-screen');
+            const courseView = document.getElementById('course-view');
+            const container = document.getElementById('cards-container');
+            const header = document.getElementById('course-header');
+
+            welcome.style.display = 'none';
+            courseView.style.display = 'block';
+            header.innerText = courseFolderName;
+            container.innerHTML = '<p style="color:var(--text-body)">Загрузка модулей...</p>';
+
+            try {
+                // 1. Получаем список содержимого папки курса через GitHub API
+                const apiUrl = `https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseFolderName)}`;
+                const response = await fetch(apiUrl);
+                const items = await response.json();
+
+                // Фильтруем только папки (это наши модули)
+                const modules = items.filter(item => item.type === 'dir');
+        
+        container.innerHTML = ''; // Очищаем индикатор загрузки
+
+                if (modules.length === 0) {
+                    container.innerHTML = '<p>В этом курсе пока нет модулей.</p>';
+                    return;
+                }
+
+                // 2. Для каждой папки модуля ищем текстовый файл
+                for (const [index, mod] of modules.entries()) {
+                    const infoUrl = `https://raw.githubusercontent.com/${CONFIG.username}/${CONFIG.repo}/${CONFIG.branch}/${encodeURIComponent(mod.path)}/info.txt`;
+            
+                    let title = mod.name; // Запасное название
+                    let description = "Описание не найдено.";
+
+                    try {
+                        const infoRes = await fetch(infoUrl);
+                        if (infoRes.ok) {
+                            const text = await infoRes.text();
+                            const lines = text.split('\n');
+                            title = lines[0] || title;
+                            description = lines[1] || description;
+                        }
+                    } catch (e) {
+                console.error("Не удалось прочитать info.txt для " + mod.name);
+                    }
+
+                    // 3. Создаем карточку модуля
+                    const card = document.createElement('div');
+                    card.className = 'pres-card';
+                    card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
+            
+                    card.innerHTML = `
+                        <div class="pres-img-box">📦</div>
+                        <div>
+                            <h3 style="margin:0 0 5px 0">${title}</h3>
+                            <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${description}</p>
+                        </div>
+                        <button class="start-btn" onclick="window.location.href='https://github.com/${CONFIG.username}/${CONFIG.repo}/tree/${CONFIG.branch}/${encodeURIComponent(mod.path)}'">
+                            Открыть
+                        </button>
+                    `;
+                    container.appendChild(card);
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="color:var(--primary)">Ошибка загрузки данных. Проверьте настройки CONFIG.</p>';
+                console.error(error);
+            }
+        }
+
+        // Функция для автоматического формирования меню курсов в сайдбаре
+        async function loadCoursesToSidebar() {
+            const list = document.getElementById('courses-list');
+            try {
+                const response = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/`);
+                const items = await response.json();
+        
+                // Находим все папки, название которых начинается на "Курс"
+                const courses = items.filter(item => item.type === 'dir' && item.name.startsWith('Курс'));
+        
+                list.innerHTML = '';
+                courses.forEach(course => {
+                    const btn = document.createElement('button');
+                    btn.className = 'course-btn';
+                    btn.innerText = course.name;
+                    btn.onclick = () => openCourse(course.name);
+                    list.appendChild(btn);
+                });
+            } catch (e) {
+                console.error("Ошибка загрузки списка курсов");
+            }
+        }
+
+        // Запускаем при загрузке
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCoursesToSidebar();
+            document.getElementById('sidebar').classList.add('hidden');
+        });
     </script>
 </body>
 </html>
