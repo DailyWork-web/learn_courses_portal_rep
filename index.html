@@ -306,79 +306,85 @@
     }
 }
 
-        // Функция для загрузки МОДУЛЕЙ внутри выбранного курса
         async function openCourse(courseFolderName) {
-            if (window.innerWidth <= 768) toggleSidebar();
+    if (window.innerWidth <= 768) toggleSidebar();
     
-            const welcome = document.getElementById('welcome-screen');
-            const courseView = document.getElementById('course-view');
-            const container = document.getElementById('cards-container');
-            const header = document.getElementById('course-header');
+    const welcome = document.getElementById('welcome-screen');
+    const courseView = document.getElementById('course-view');
+    const container = document.getElementById('cards-container');
+    const header = document.getElementById('course-header');
 
-            welcome.style.display = 'none';
-            courseView.style.display = 'block';
-            header.innerText = courseFolderName;
-            container.innerHTML = '<p style="color:var(--text-body)">Загрузка модулей...</p>';
+    welcome.style.display = 'none';
+    courseView.style.display = 'block';
+    header.innerText = courseFolderName;
+    container.innerHTML = '<p style="color:var(--text-body)">Загрузка модулей...</p>';
 
-            try {
-                const apiUrl = `https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseFolderName)}`;
-                const response = await fetch(apiUrl);
-                const items = await response.json();
+    try {
+        const apiUrl = `https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseFolderName)}`;
+        const response = await fetch(apiUrl);
+        const items = await response.json();
 
-                // Берем все папки внутри курса
-                const modules = items.filter(item => item.type === 'dir');
-        
-                container.innerHTML = '';
+        const modules = items.filter(item => item.type === 'dir');
+        container.innerHTML = '';
 
-                if (modules.length === 0) {
-                    container.innerHTML = '<p>В этой папке нет модулей.</p>';
-                    return;
-                }
+        for (const [index, mod] of modules.entries()) {
+            // 1. Сначала получаем список файлов ВНУТРИ папки модуля
+            const modFilesUrl = `https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(mod.path)}`;
+            const modFilesRes = await fetch(modFilesUrl);
+            const files = await modFilesRes.json();
 
-                for (const [index, mod] of modules.entries()) {
-                    const infoUrl = `https://raw.githubusercontent.com/${CONFIG.username}/${CONFIG.repo}/${CONFIG.branch}/${encodeURIComponent(mod.path)}/info.txt`;
-            
-                    let title = mod.name; 
-                    let description = "Описание не найдено (добавьте info.txt).";
+            // 2. Ищем файл info.txt и находим "целевой файл" (тот, что не info.txt)
+            const infoFile = files.find(f => f.name.toLowerCase() === 'info.txt');
+            const targetFile = files.find(f => f.name.toLowerCase() !== 'info.txt' && f.type === 'file');
 
-                    try {
-                        const infoRes = await fetch(infoUrl);
-                        if (infoRes.ok) {
-                            const text = await infoRes.text();
-                            const lines = text.split('\n');
-                            title = lines[0] || title;
-                            description = lines[1] || description;
-                        }
-                    } catch (e) {
-                        console.warn("Файл info.txt отсутствует в " + mod.name);
-                    }
+            let title = mod.name;
+            let description = "Нажмите 'Начать', чтобы открыть материалы.";
 
-                    const card = document.createElement('div');
-                    card.className = 'pres-card';
-                    card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
-            
-                    card.innerHTML = `
-                        <div class="pres-img-box">📁</div>
-                        <div>
-                            <h3 style="margin:0 0 5px 0">${title}</h3>
-                            <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${description}</p>
-                        </div>
-                        <button class="start-btn" onclick="window.open('https://github.com/${CONFIG.username}/${CONFIG.repo}/tree/${CONFIG.branch}/${encodeURIComponent(mod.path)}', '_blank')">
-                            Открыть материалы
-                        </button>
-                    `;
-                    container.appendChild(card);
-                }
-            } catch (error) {
-                container.innerHTML = '<p style="color:var(--primary)">Не удалось загрузить модули.</p>';
+            // 3. Читаем описание из info.txt
+            if (infoFile) {
+                try {
+                    const infoRes = await fetch(infoFile.download_url);
+                    const text = await infoRes.text();
+                    const lines = text.split('\n');
+                    title = lines[0] || title;
+                    description = lines[1] || description;
+                } catch (e) { console.error("Ошибка чтения info.txt"); }
             }
-        }
 
-        window.onload = () => {
-            loadCoursesToSidebar();
-            document.getElementById('sidebar').classList.add('hidden');
-        };
+            // 4. Генерируем карточку
+            const card = document.createElement('div');
+            card.className = 'pres-card';
+            card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
+            
+            // Если целевой файл найден, формируем ссылку на него
+            // Для PDF и документов используем Google Docs Viewer для открытия в браузере
+            let fileLink = "#";
+            if (targetFile) {
+                fileLink = targetFile.download_url;
+                // Если это PDF или офисный документ, открываем через просмотрщик
+                if (targetFile.name.match(/\.(pdf|doc|docx|ppt|pptx)$/i)) {
+                    fileLink = `https://docs.google.com/viewer?url=${encodeURIComponent(targetFile.download_url)}&embedded=true`;
+                }
+            }
+
+            card.innerHTML = `
+                <div class="pres-img-box">📄</div>
+                <div>
+                    <h3 style="margin:0 0 5px 0">${title}</h3>
+                    <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${description}</p>
+                </div>
+                <button class="start-btn" onclick="window.open('${fileLink}', '_blank')">
+                    Начать обучение
+                </button>
+            `;
+            container.appendChild(card);
+        }
+    } catch (error) {
+        container.innerHTML = '<p style="color:var(--primary)">Ошибка при загрузке данных курса.</p>';
+    }
+}
     </script>
 </body>
 </html>
+
 
