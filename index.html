@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Portal Premium | Sidebar Closed</title>
+    <title>Study Portal Premium | Final Adaptive</title>
     <style>
         :root {
             --bg-main: #121212;
@@ -38,6 +38,7 @@
             color: var(--text-title);
             display: flex;
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
             transition: background-color 0.4s;
         }
@@ -49,12 +50,13 @@
             margin: 15px 0;
         }
 
-        /* --- Сайдбар --- */
+        /* --- САЙДБАР (SIDEBAR) --- */
         .sidebar-container {
             display: flex;
             position: relative;
             z-index: 1000;
             height: 100%;
+            flex-shrink: 0;
         }
 
         #sidebar {
@@ -64,9 +66,10 @@
             display: flex;
             flex-direction: column;
             transition: var(--transition);
+            will-change: margin-left;
         }
 
-        /* Теперь класс hidden добавлен в HTML по умолчанию */
+        /* Состояние по умолчанию - ЗАКРЫТО */
         #sidebar.hidden {
             margin-left: calc(-1 * var(--sidebar-width));
         }
@@ -88,6 +91,7 @@
             color: var(--text-title);
             font-weight: bold;
             transition: var(--transition);
+            z-index: 1001;
         }
 
         .sidebar-content {
@@ -126,54 +130,35 @@
 
         .course-btn:hover {
             border-left: 3px solid var(--primary);
-            background: rgba(0,0,0,0.05);
+            background: rgba(128, 0, 32, 0.05);
             color: var(--text-title);
         }
 
-        .theme-section {
-            margin-top: auto;
-            padding-top: 10px;
-        }
+        /* ТЕМА */
+        .theme-section { margin-top: auto; padding-top: 10px; }
+        .switch-container { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
 
-        .switch-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 5px 0;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-            flex-shrink: 0;
-        }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute; cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #555;
-            transition: .4s; border-radius: 20px;
-            border: 1px solid var(--border);
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555; transition: .4s; border-radius: 20px; border: 1px solid var(--border);
         }
         .slider:before {
-            position: absolute; content: "";
-            height: 14px; width: 14px;
-            left: 2px; bottom: 2px;
-            background-color: #fff;
-            transition: .4s; border-radius: 50%;
+            position: absolute; content: ""; height: 14px; width: 14px;
+            left: 2px; bottom: 2px; background-color: #fff; transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- Контент --- */
+        /* --- ОСНОВНОЙ КОНТЕНТ --- */
         #main-content {
             flex-grow: 1;
             padding: 40px;
             overflow-y: auto;
             transition: var(--transition);
             width: 100%;
+            position: relative;
         }
 
         #welcome-screen {
@@ -186,10 +171,11 @@
         }
 
         #welcome-screen h1 { font-size: clamp(2.5rem, 8vw, 5rem); margin: 0; letter-spacing: -2px; }
-        #welcome-screen p { color: var(--text-body); max-width: 550px; line-height: 1.8; padding: 0 20px; }
+        #welcome-screen p { color: var(--text-body); max-width: 550px; line-height: 1.8; }
 
-        #course-view { display: none; max-width: 1200px; margin: 0 auto; }
-        
+        #course-view { display: none; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+        /* --- КАРТОЧКИ С АНИМАЦИЕЙ --- */
         .pres-card {
             display: grid;
             grid-template-columns: 160px 1fr 200px;
@@ -200,19 +186,14 @@
             align-items: center;
             gap: 25px;
             border: 1px solid var(--border);
-            opacity: 0;
+            opacity: 0; /* Начальное состояние для анимации */
         }
-
-        [data-theme="light"] .pres-card { box-shadow: 4px 4px 0px var(--border); }
 
         .pres-img-box {
             height: 100px;
             background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
             border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
+            display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
         }
 
         .pres-info h3 { margin: 0 0 8px 0; color: var(--text-title); font-size: 1.2rem; }
@@ -220,47 +201,45 @@
 
         .start-btn {
             background: var(--primary);
-            color: white;
-            border: none;
-            padding: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.3s;
+            color: white; border: none; padding: 15px;
+            cursor: pointer; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1px; transition: 0.3s;
         }
 
         .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
         .back-link {
-            color: var(--text-body);
-            font-size: 0.8rem;
-            cursor: pointer;
-            margin-bottom: 20px;
-            display: inline-block;
-            border-bottom: 1px solid var(--primary);
+            color: var(--text-body); font-size: 0.8rem; cursor: pointer;
+            margin-bottom: 20px; display: inline-block; border-bottom: 1px solid var(--primary);
         }
 
+        /* --- КЛЮЧЕВЫЕ АНИМАЦИИ --- */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* --- АДАПТИВНОСТЬ --- */
         @media (max-width: 1024px) {
             .pres-card { grid-template-columns: 120px 1fr; }
             .start-btn { grid-column: 1 / -1; }
         }
 
         @media (max-width: 768px) {
-            .sidebar-container { position: absolute; left: 0; top: 0; }
-            #main-content { padding: 60px 20px 20px 20px; }
-            .pres-card { grid-template-columns: 1fr; text-align: center; }
-            .pres-img-box { width: 100px; margin: 0 auto; }
+            .sidebar-container {
+                position: fixed; /* Фиксируем поверх контента на мобильных */
+                height: 100%;
+            }
+            #sidebar.hidden { margin-left: calc(-1 * var(--sidebar-width)); }
+            
+            #main-content { padding: 80px 20px 20px 20px; }
+            .pres-card { grid-template-columns: 1fr; text-align: center; gap: 15px; }
+            .pres-img-box { width: 80px; height: 80px; margin: 0 auto; font-size: 2rem; }
             #welcome-screen h1 { font-size: 3rem; }
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
     <div class="sidebar-container">
         <aside id="sidebar" class="hidden">
@@ -280,7 +259,7 @@
                             <input type="checkbox" id="theme-toggle" onchange="updateTheme()">
                             <span class="slider"></span>
                         </label>
-                        <span id="theme-text" style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Темная тема</span>
+                        <span id="theme-text" style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase;">Темная тема</span>
                     </div>
                 </div>
             </div>
@@ -297,20 +276,25 @@
 
         <div id="course-view">
             <span class="back-link" onclick="goHome()">ВЕРНУТЬСЯ НА ГЛАВНУЮ</span>
-            <h1 id="course-header" style="margin-top: 10px; font-size: clamp(1.5rem, 5vw, 2.5rem);">Название курса</h1>
+            <h1 id="course-header" style="margin-top: 10px;">Название курса</h1>
             <div class="separator" style="margin-bottom: 40px;"></div>
             <div id="cards-container"></div>
         </div>
     </main>
 
     <script>
+        // Функция открытия/закрытия панели
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('sidebar-icon');
+            
             sidebar.classList.toggle('hidden');
+            
+            // Если панель скрыта - символ ❯, если открыта - ❮
             icon.innerText = sidebar.classList.contains('hidden') ? '❯' : '❮';
         }
 
+        // Функция смены темы
         function updateTheme() {
             const isLight = document.getElementById('theme-toggle').checked;
             const text = document.getElementById('theme-text');
@@ -318,7 +302,9 @@
             text.innerText = isLight ? 'Светлая тема' : 'Темная тема';
         }
 
+        // Функция отображения карточек курса
         function openCourse(name) {
+            // На мобильных устройствах (до 768px) закрываем панель после выбора
             if (window.innerWidth <= 768) {
                 document.getElementById('sidebar').classList.add('hidden');
                 document.getElementById('sidebar-icon').innerText = '❯';
@@ -329,27 +315,41 @@
             document.getElementById('course-header').innerText = name;
 
             const container = document.getElementById('cards-container');
-            container.innerHTML = '';
+            container.innerHTML = ''; // Очистка перед загрузкой
+            
             const icons = ['📖', '📑', '🔬'];
 
+            // Создаем карточки с задержкой анимации
             for(let i = 1; i <= 3; i++) {
-                container.innerHTML += `
-                    <div class="pres-card" style="animation: fadeInUp 0.5s ease forwards ${i*0.15}s">
-                        <div class="pres-img-box">${icons[i-1]}</div>
-                        <div class="pres-info">
-                            <h3>Лекция модуля №${i}</h3>
-                            <p>Системный разбор тем в рамках "${name}". Нажмите кнопку для перехода к материалам.</p>
-                        </div>
-                        <button class="start-btn">Начать обучение</button>
+                const card = document.createElement('div');
+                card.className = 'pres-card';
+                // Важно: анимация прописывается здесь, чтобы она срабатывала при каждом входе
+                card.style.animation = `fadeInUp 0.5s ease forwards ${i * 0.15}s`;
+                
+                card.innerHTML = `
+                    <div class="pres-img-box">${icons[i-1]}</div>
+                    <div class="pres-info">
+                        <h3>Лекция модуля №${i}</h3>
+                        <p>Системный разбор тем в рамках "${name}". Нажмите кнопку для перехода к материалам.</p>
                     </div>
+                    <button class="start-btn">Начать обучение</button>
                 `;
+                container.appendChild(card);
             }
         }
 
+        // Возврат на главный экран
         function goHome() {
             document.getElementById('welcome-screen').style.display = 'flex';
             document.getElementById('course-view').style.display = 'none';
         }
+
+        // Гарантируем закрытое состояние при загрузке (доп. страховка)
+        window.onload = () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.add('hidden');
+            document.getElementById('sidebar-icon').innerText = '❯';
+        };
     </script>
 </body>
 </html>
