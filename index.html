@@ -273,89 +273,168 @@
             document.getElementById('sidebar').classList.add('hidden');
         };
         // Конфигурация (заполни свои данные)
-        const CONFIG = {
-            owner: 'DailyWork-web',
-            repo: 'learn_courses_portal_rep',
-            branch: 'main'
-        };
+        // 1. КОНФИГУРАЦИЯ — ПРОВЕРЬ ЭТИ ДАННЫЕ!
+const CONFIG = {
+    owner: 'DailyWork-web', // Твой логин на GitHub
+    repo: 'learn_courses_portal_rep', // Название репозитория
+    branch: 'main', // Обычно main или master
+    token: '' // Оставь пустым для публичного репо
+};
 
-        const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
+const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
 
-        // Функция для поиска любого HTML файла в глубине папок
-        async function findAnyHtml(path) {
-            const contents = await fetchRepoContent(path);
+let coursesData = {};
+
+// Универсальный загрузчик данных с GitHub
+async function fetchRepoContent(path = '') {
+    const url = `${GITHUB_API_URL}/${path}?ref=${CONFIG.branch}`;
+    const response = await fetch(url, {
+        headers: CONFIG.token ? { 'Authorization': `token ${CONFIG.token}` } : {}
+    });
     
-            // 1. Ищем любой файл .html (обычно это index.html)
-            const htmlFile = contents.find(f => f.name.toLowerCase().endsWith('.html'));
-            if (htmlFile) return htmlFile.path;
+    if (!response.ok) {
+        console.error(`Ошибка API: ${response.status} на пути ${path}`);
+        return null;
+    }
+    return await response.json();
+}
 
-            // 2. Если в этой папке нет, идем глубже во все вложенные папки
-            const subDirs = contents.filter(item => item.type === 'dir');
-            for (const dir of subDirs) {
-                const foundPath = await findAnyHtml(dir.path);
-                if (foundPath) return foundPath;
-            }
-            return null;
-        }
+// Поиск любого HTML файла на любой глубине
+async function findHtmlRecursive(path) {
+    const items = await fetchRepoContent(path);
+    if (!items || !Array.isArray(items)) return null;
 
-        // Функция для поиска файла информации (любой .txt)
-        async function findInfoFile(path) {
-            const contents = await fetchRepoContent(path);
-            const txtFile = contents.find(f => f.name.toLowerCase().endsWith('.txt'));
-            if (txtFile) {
-                return await fetch(txtFile.download_url).then(r => r.text());
-            }
-            return null;
-        }
+    // Сначала ищем в текущей папке
+    const htmlFile = items.find(f => f.name.toLowerCase().endsWith('.html'));
+    if (htmlFile) return htmlFile.path;
 
-        async function openCourse(coursePath, courseName) {
-            if (window.innerWidth <= 768) toggleSidebar();
+    // Если нет, идем вглубь
+    const dirs = items.filter(i => i.type === 'dir');
+    for (const d of dirs) {
+        const found = await findHtmlRecursive(d.path);
+        if (found) return found;
+    }
+    return null;
+}
+
+// Инициализация портала
+async function initPortal() {
+    console.log("Запуск инициализации...");
+    const rootItems = await fetchRepoContent('');
     
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('course-view').style.display = 'block';
-            document.getElementById('course-header').innerText = courseName;
+    if (!rootItems) {
+        alert("Не удалось загрузить данные из GitHub. Проверьте CONFIG!");
+        return;
+    }
+
+    const sidebarList = document.getElementById('courses-list');
+    sidebarList.innerHTML = '';
+
+    // Берем только папки в корне — это КУРСЫ
+    const courses = rootItems.filter(item => item.type === 'dir');
+
+    for (const course of courses) {
+        console.log(`Найден курс: ${course.name}`);
+        
+        // Создаем кнопку в меню
+        const btn = document.createElement('button');
+        btn.className = 'course-btn';
+        btn.innerText = course.name;
+        btn.onclick = () => openCourse(course.path, course.name);
+        sidebarList.appendChild(btn);
+    }
+}
+
+async function openCourse(path, name) {
+    if (window.innerWidth <= 768) toggleSidebar();
     
-            const container = document.getElementById('cards-container');
-            container.innerHTML = '<p style="color:var(--text-body)">Сканирую модули...</p>';
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('course-view').style.display = 'block';
+    document.getElementById('course-header').innerText = name;
+    
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '<p style="color:var(--text-body)">Загрузка модулей...</p>';
 
-            // Получаем все папки внутри курса (это наши модули)
-            const moduleDirs = (await fetchRepoContent(coursePath)).filter(item => item.type === 'dir');
-            container.innerHTML = '';
+    // Получаем папки внутри курса — это МОДУЛИ
+    const moduleItems = await fetchRepoContent(path);
+    if (!moduleItems) return;
 
-            for (const [i, dir] of moduleDirs.entries()) {
-                // Ищем описание в любом .txt файле внутри папки модуля
-                const rawInfo = await findInfoFile(dir.path);
-                const info = parseInfo(rawInfo, dir.name);
+    const modules = moduleItems.filter(i => i.type === 'dir');
+    container.innerHTML = '';
 
-                // Ищем ПЕРВЫЙ попавшийся HTML файл в недрах папки модуля
-                const indexPath = await findAnyHtml(dir.path);
-                const finalUrl = indexPath ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${indexPath}` : '#';
-
-                const card = document.createElement('div');
-                card.className = 'pres-card';
-                card.style.animation = `containerFade 0.6s ease forwards ${i * 0.1}s`;
-                card.innerHTML = `
-                    <div class="pres-img-box">${info.icon}</div>
-                    <div>
-                        <h3 style="margin:0 0 5px 0">${info.title}</h3>
-                        <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${info.desc}</p>
-                    </div>
-                    <button class="start-btn" onclick="window.open('${finalUrl}', '_blank')">Открыть</button>
-                `;
-             container.appendChild(card);
-            }
+    for (const [index, modDir] of modules.entries()) {
+        console.log(`Обработка модуля: ${modDir.name}`);
+        
+        // 1. Ищем инфо (любой .txt)
+        const contentInModule = await fetchRepoContent(modDir.path);
+        const infoFile = contentInModule.find(f => f.name.toLowerCase().endsWith('.txt'));
+        let infoText = "";
+        if (infoFile) {
+            infoText = await fetch(infoFile.download_url).then(r => r.text());
         }
 
-        // Универсальный парсер: разделит текст по '|', если он есть, или возьмет весь текст
-        function parseInfo(text, folderName) {
-            if (!text) return { title: folderName, desc: 'Модуль обучения', icon: '📁' };
-            const parts = text.split('|').map(p => p.trim());
-            return {
-                title: parts[0] || folderName,
-                desc: parts[1] || 'Прогрессивные методики обучения',
-                icon: parts[2] || '📖'
-            };
-        }
+        const parsed = parseInfo(infoText, modDir.name);
+
+        // 2. Ищем HTML (запуск)
+        const indexPath = await findHtmlRecursive(modDir.path);
+        const finalUrl = indexPath ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${indexPath}` : null;
+
+        // 3. Рендерим карточку
+        const card = document.createElement('div');
+        card.className = 'pres-card';
+        card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
+        card.style.opacity = "1"; // Чтобы не была прозрачной, если анимация не сработает
+        
+        card.innerHTML = `
+            <div class="pres-img-box">${parsed.icon}</div>
+            <div>
+                <h3 style="margin:0 0 5px 0">${parsed.title}</h3>
+                <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${parsed.desc}</p>
+            </div>
+            <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML файл не найден в этой папке')" }">
+                ${finalUrl ? 'Запустить' : 'Нет файла'}
+            </button>
+        `;
+        container.appendChild(card);
+    }
+}
+
+function parseInfo(text, folderName) {
+    if (!text) return { title: folderName, desc: 'Описание не найдено', icon: '📁' };
+    const parts = text.split('|').map(p => p.trim());
+    return {
+        title: parts[0] || folderName,
+        desc: parts[1] || 'Обучающий модуль',
+        icon: parts[2] || '📖'
+    };
+}
+
+// Стандартные функции интерфейса
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('sidebar-icon');
+    sidebar.classList.toggle('hidden');
+    icon.innerText = sidebar.classList.contains('hidden') ? '❯' : '❮';
+}
+
+function toggleCourses() {
+    document.getElementById('courses-list').classList.toggle('open');
+    document.getElementById('arrow').classList.toggle('rotate');
+}
+
+function goHome() {
+    document.getElementById('welcome-screen').style.display = 'block';
+    document.getElementById('course-view').style.display = 'none';
+}
+
+function updateTheme() {
+    const isLight = document.getElementById('theme-toggle').checked;
+    document.body.setAttribute('data-theme', isLight ? 'light' : 'dark');
+    document.getElementById('theme-text').innerText = isLight ? 'Light Mode' : 'Dark Mode';
+}
+
+window.onload = initPortal;
     </script>
 </body>
 </html>
+
