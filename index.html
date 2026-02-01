@@ -274,9 +274,96 @@
             repo: 'learn_courses_portal_rep',
             branch: 'main' 
         };
+        // Вспомогательная функция для поиска файла запуска (index.html, story.html и т.д.)
+async function findLaunchFile(folderPath) {
+    try {
+        const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${folderPath}`);
+        const items = await res.json();
+        
+        // 1. Ищем HTML файлы в текущей папке
+        const htmlFile = items.find(i => i.type === 'file' && i.name.toLowerCase().match(/(index|story|player|start)\.html$/));
+        if (htmlFile) return htmlFile.path;
+
+        // 2. Если не нашли, заглядываем в подпапки (например, res/ или zip/)
+        const subFolders = items.filter(i => i.type === 'dir');
+        for (let sub of subFolders) {
+            const deepPath = await findLaunchFile(sub.path);
+            if (deepPath) return deepPath;
+        }
+    } catch (e) { return null; }
+    return null;
+}
+
+async function openCourse(folderName) {
+    if (window.innerWidth <= 768) toggleSidebar();
+    
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('course-view').style.display = 'block';
+    document.getElementById('course-header').innerText = folderName;
+    
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '<p>Анализ структуры курса...</p>';
+
+    try {
+        const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(folderName)}`);
+        const modules = await res.json();
+        const moduleFolders = modules.filter(m => m.type === 'dir');
+
+        container.innerHTML = '';
+
+        for (let mod of moduleFolders) {
+            const modRes = await fetch(mod.url);
+            const files = await modRes.json();
+            
+            const infoFile = files.find(f => f.name.toLowerCase() === 'info.txt');
+            const scormFolder = files.find(f => f.type === 'dir');
+            const studyFile = files.find(f => f.name.toLowerCase() !== 'info.txt' && f.type === 'file');
+
+            let title = mod.name;
+            let desc = "Запуск модуля...";
+            let finalLink = "#";
+
+            // УМНЫЙ ПОИСК ССЫЛКИ
+            if (scormFolder) {
+                // Запускаем глубокий поиск стартового HTML файла
+                const launchPath = await findLaunchFile(scormFolder.path);
+                if (launchPath) {
+                    finalLink = `https://${CONFIG.username}.github.io/${CONFIG.repo}/${encodeURIComponent(launchPath)}`;
+                }
+            } else if (studyFile) {
+                finalLink = studyFile.download_url;
+                if (studyFile.name.match(/\.(pdf|doc|docx|ppt|pptx)$/i)) {
+                    finalLink = `https://docs.google.com/viewer?url=${encodeURIComponent(studyFile.download_url)}&embedded=true`;
+                }
+            }
+
+            if (infoFile) {
+                const infoTxt = await (await fetch(infoFile.download_url)).text();
+                const lines = infoTxt.split('\n');
+                title = lines[0] || title;
+                desc = lines[1] || desc;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'pres-card';
+            card.innerHTML = `
+                <div class="pres-img-box">${scormFolder ? '📦' : '📄'}</div>
+                <div>
+                    <h3 style="margin:0">${title}</h3>
+                    <p style="margin:5px 0 0; font-size:0.85rem; color:var(--text-body)">${desc}</p>
+                </div>
+                <button class="start-btn" onclick="window.open('${finalLink}', '_blank')">Начать</button>
+            `;
+            container.appendChild(card);
+        }
+    } catch (e) {
+        container.innerHTML = 'Ошибка при чтении структуры GitHub.';
+    }
+}
     </script>
 </body>
 </html>
+
 
 
 
