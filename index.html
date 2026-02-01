@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Portal Premium | Final Sync</title>
+    <title>Study Portal Premium | Adaptive Sync</title>
     <style>
         :root {
             --bg-main: #0a0a0a;
@@ -29,7 +29,7 @@
             --line-color: #d2d2d7;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             margin: 0;
@@ -43,7 +43,7 @@
             transition: background-color 0.4s;
         }
 
-        /* --- BACKGROUND --- */
+        /* --- BACKGROUND SHAPES --- */
         .bg-wrapper {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -71,8 +71,15 @@
             100% { transform: translate(-40px, 80px) scale(0.9) rotate(90deg); }
         }
 
-        /* --- SIDEBAR --- */
-        .sidebar-container { display: flex; position: relative; z-index: 2000; height: 100%; flex-shrink: 0; }
+        /* --- SIDEBAR SYSTEM --- */
+        .sidebar-container { 
+            display: flex; 
+            position: relative; 
+            z-index: 2000; 
+            height: 100%; 
+            flex-shrink: 0; 
+        }
+
         #sidebar {
             width: var(--sidebar-width);
             background-color: var(--bg-sidebar);
@@ -82,13 +89,26 @@
             transition: var(--transition);
             backdrop-filter: blur(10px);
         }
+
         #sidebar.hidden { margin-left: calc(-1 * var(--sidebar-width)); }
 
         .toggle-tab {
-            position: absolute; right: -42px; top: 25px; width: 42px; height: 42px;
-            background-color: var(--bg-sidebar); border: 1px solid var(--border); border-left: none;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            border-radius: 0 10px 10px 0; color: var(--text-title); font-weight: bold;
+            position: absolute; 
+            right: -42px; 
+            top: 25px; 
+            width: 42px; 
+            height: 42px;
+            background-color: var(--bg-sidebar); 
+            border: 1px solid var(--border); 
+            border-left: none;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer;
+            border-radius: 0 10px 10px 0; 
+            color: var(--text-title); 
+            font-weight: bold;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.2);
         }
 
         .sidebar-content { padding: 40px 15px; width: var(--sidebar-width); height: 100%; display: flex; flex-direction: column; }
@@ -121,36 +141,101 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(16px); }
 
-        /* --- CONTENT --- */
-        #main-content { flex-grow: 1; padding: 40px; overflow-y: auto; position: relative; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        /* --- CONTENT AREA --- */
+        #main-content { 
+            flex-grow: 1; 
+            padding: 40px 20px; 
+            overflow-y: auto; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            z-index: 10; 
+        }
 
         .hero-container {
-            position: relative; text-align: center; padding: 60px; border: 1px solid var(--border);
-            background: var(--bg-card); backdrop-filter: blur(20px); border-radius: 30px;
-            max-width: 800px; animation: containerFade 1.2s ease;
+            position: relative; 
+            text-align: center; 
+            padding: 60px 20px; 
+            border: 1px solid var(--border);
+            background: var(--bg-card); 
+            backdrop-filter: blur(20px); 
+            border-radius: 30px;
+            max-width: 800px; 
+            width: 100%;
+            margin: auto;
+            animation: containerFade 1.2s ease;
         }
 
-        .hero-container h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); margin: 0; letter-spacing: -3px; font-weight: 800; text-transform: uppercase; }
+        .hero-container h1 { font-size: clamp(2rem, 8vw, 4.5rem); margin: 0; letter-spacing: -2px; font-weight: 800; text-transform: uppercase; }
         .hero-container h1 span { color: var(--primary); }
-        .accent-line { height: 3px; width: 60px; background: var(--primary); margin: 25px auto; }
+        .accent-line { height: 3px; width: 60px; background: var(--primary); margin: 20px auto; }
 
         #course-view { display: none; max-width: 1000px; width: 100%; padding-bottom: 50px; }
+        #course-header { margin-bottom: 30px; font-size: clamp(1.5rem, 5vw, 2.5rem); text-align: center; }
         
+        /* --- ADAPTIVE CARDS --- */
         .pres-card { 
-            display: grid; grid-template-columns: 140px 1fr 180px; background: var(--bg-card); 
-            padding: 25px; margin-bottom: 20px; align-items: center; gap: 25px; 
-            border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(15px);
-            transition: all 0.3s ease; opacity: 0; animation: containerFade 0.6s ease forwards;
+            display: grid; 
+            grid-template-columns: 100px 1fr 150px; 
+            background: var(--bg-card); 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            align-items: center; 
+            gap: 20px; 
+            border: 1px solid var(--border); 
+            border-radius: 20px; 
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease; 
+            opacity: 0; 
+            animation: containerFade 0.6s ease forwards;
         }
 
-        .pres-card:hover { transform: scale(1.02) translateX(10px); border-color: var(--primary); }
-        .pres-img-box { height: 90px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border-radius: 15px; }
+        .pres-card:hover { transform: scale(1.01) translateX(5px); border-color: var(--primary); }
+        .pres-img-box { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border-radius: 15px; }
         
         .start-btn { 
-            background: var(--primary); color: white; border: none; padding: 14px; cursor: pointer; font-weight: 700; 
+            background: var(--primary); color: white; border: none; padding: 12px; cursor: pointer; font-weight: 700; 
             text-transform: uppercase; border-radius: 12px; font-size: 0.75rem; transition: 0.3s;
+            width: 100%;
         }
         .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+        /* --- MOBILE ADAPTATION --- */
+        @media (max-width: 768px) {
+            .sidebar-container {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100%;
+            }
+            
+            #sidebar {
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }
+
+            .pres-card {
+                grid-template-columns: 80px 1fr;
+                grid-template-areas: 
+                    "icon info"
+                    "btn btn";
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .pres-img-box { grid-area: icon; height: 60px; }
+            .pres-card > div:nth-child(2) { grid-area: info; }
+            .start-btn { grid-area: btn; padding: 15px; margin-top: 5px; }
+
+            #main-content { padding: 80px 15px 40px; } /* Space for the floating menu icon */
+        }
+
+        @media (max-width: 480px) {
+            .hero-container { padding: 40px 15px; }
+            .hero-container h1 { letter-spacing: -1px; }
+            .pres-card { border-radius: 15px; }
+            .sidebar-content { padding: 30px 10px; }
+        }
 
         @keyframes containerFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -195,20 +280,20 @@
         </div>
 
         <div id="course-view">
-            <h1 id="course-header" style="margin-bottom: 40px; font-size: 2.5rem;">Курс</h1>
+            <h1 id="course-header">Курс</h1>
             <div id="cards-container"></div>
         </div>
     </main>
 
     <script>
-        // === КОНФИГУРАЦИЯ (ЗАПОЛНИ СВОЕ) ===
+        // === КОНФИГУРАЦИЯ ===
         const CONFIG = {
             username: 'DailyWork-web', 
             repo: 'learn_courses_portal_rep',
             branch: 'main'
         };
 
-        // --- УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ ---
+        // --- UI LOGIC ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('sidebar-icon');
@@ -232,26 +317,21 @@
             document.getElementById('course-view').style.display = 'none';
         }
 
-        // --- ЛОГИКА GITHUB (УМНАЯ ИЩЕЙКА) ---
-
-        // Глубокий поиск стартового файла в "куче"
+        // --- GITHUB API LOGIC ---
         async function findBestLaunchPath(path) {
             try {
                 const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${path}`);
                 const items = await res.json();
 
-                // 1. Ищем HTML (index/story/player)
                 const html = items.find(i => i.type === 'file' && i.name.toLowerCase().match(/(index|story|player|start)\.html$/));
                 if (html) return html.path;
 
-                // 2. Рекурсия по папкам
                 const subdirs = items.filter(i => i.type === 'dir');
                 for (let dir of subdirs) {
                     const deep = await findBestLaunchPath(dir.path);
                     if (deep) return deep;
                 }
 
-                // 3. Если только PDF
                 const pdf = items.find(i => i.type === 'file' && i.name.toLowerCase().endsWith('.pdf'));
                 if (pdf) return pdf.path;
             } catch (e) { return null; }
@@ -283,7 +363,7 @@
             document.getElementById('course-header').innerText = courseName;
             
             const container = document.getElementById('cards-container');
-            container.innerHTML = '<p style="color:var(--text-body); padding:20px;">Поиск материалов...</p>';
+            container.innerHTML = '<p style="color:var(--text-body); padding:20px; text-align:center;">Поиск материалов...</p>';
 
             try {
                 const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseName)}`);
@@ -292,8 +372,6 @@
 
                 for (let [index, mod] of moduleFolders.entries()) {
                     const launchPath = await findBestLaunchPath(mod.path);
-                    
-                    // Получаем info.txt для описания
                     const modRes = await fetch(mod.url);
                     const modFiles = await modRes.json();
                     const infoFile = modFiles.find(f => f.name.toLowerCase() === 'info.txt');
@@ -315,9 +393,11 @@
                     }
 
                     if (infoFile) {
-                        const txt = await (await fetch(infoFile.download_url)).text();
-                        const lines = txt.split('\n');
-                        title = lines[0] || title; desc = lines[1] || desc;
+                        try {
+                            const txt = await (await fetch(infoFile.download_url)).text();
+                            const lines = txt.split('\n');
+                            title = lines[0] || title; desc = lines[1] || desc;
+                        } catch(err) {}
                     }
 
                     const card = document.createElement('div');
@@ -330,7 +410,7 @@
                     `;
                     container.appendChild(card);
                 }
-            } catch (e) { container.innerHTML = '<p>Ошибка загрузки.</p>'; }
+            } catch (e) { container.innerHTML = '<p style="text-align:center;">Ошибка загрузки материалов.</p>'; }
         }
 
         window.onload = () => {
