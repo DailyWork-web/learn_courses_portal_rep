@@ -272,92 +272,90 @@
         window.onload = () => {
             document.getElementById('sidebar').classList.add('hidden');
         };
-                // Конфигурация GitHub
         // Конфигурация (заполни свои данные)
-const CONFIG = {
-    owner: 'ТВОЙ_ЛОГИН',
-    repo: 'ТВОЙ_РЕПОЗИТОРИЙ',
-    branch: 'main'
-};
+        const CONFIG = {
+            owner: 'DailyWork-web',
+            repo: 'learn_courses_portal_rep',
+            branch: 'main'
+        };
 
-const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
+        const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
 
-// Функция для поиска любого HTML файла в глубине папок
-async function findAnyHtml(path) {
-    const contents = await fetchRepoContent(path);
+        // Функция для поиска любого HTML файла в глубине папок
+        async function findAnyHtml(path) {
+            const contents = await fetchRepoContent(path);
     
-    // 1. Ищем любой файл .html (обычно это index.html)
-    const htmlFile = contents.find(f => f.name.toLowerCase().endsWith('.html'));
-    if (htmlFile) return htmlFile.path;
+            // 1. Ищем любой файл .html (обычно это index.html)
+            const htmlFile = contents.find(f => f.name.toLowerCase().endsWith('.html'));
+            if (htmlFile) return htmlFile.path;
 
-    // 2. Если в этой папке нет, идем глубже во все вложенные папки
-    const subDirs = contents.filter(item => item.type === 'dir');
-    for (const dir of subDirs) {
-        const foundPath = await findAnyHtml(dir.path);
-        if (foundPath) return foundPath;
-    }
-    return null;
-}
+            // 2. Если в этой папке нет, идем глубже во все вложенные папки
+            const subDirs = contents.filter(item => item.type === 'dir');
+            for (const dir of subDirs) {
+                const foundPath = await findAnyHtml(dir.path);
+                if (foundPath) return foundPath;
+            }
+            return null;
+        }
 
-// Функция для поиска файла информации (любой .txt)
-async function findInfoFile(path) {
-    const contents = await fetchRepoContent(path);
-    const txtFile = contents.find(f => f.name.toLowerCase().endsWith('.txt'));
-    if (txtFile) {
-        return await fetch(txtFile.download_url).then(r => r.text());
-    }
-    return null;
-}
+        // Функция для поиска файла информации (любой .txt)
+        async function findInfoFile(path) {
+            const contents = await fetchRepoContent(path);
+            const txtFile = contents.find(f => f.name.toLowerCase().endsWith('.txt'));
+            if (txtFile) {
+                return await fetch(txtFile.download_url).then(r => r.text());
+            }
+            return null;
+        }
 
-async function openCourse(coursePath, courseName) {
-    if (window.innerWidth <= 768) toggleSidebar();
+        async function openCourse(coursePath, courseName) {
+            if (window.innerWidth <= 768) toggleSidebar();
     
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('course-view').style.display = 'block';
-    document.getElementById('course-header').innerText = courseName;
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('course-view').style.display = 'block';
+            document.getElementById('course-header').innerText = courseName;
     
-    const container = document.getElementById('cards-container');
-    container.innerHTML = '<p style="color:var(--text-body)">Сканирую модули...</p>';
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '<p style="color:var(--text-body)">Сканирую модули...</p>';
 
-    // Получаем все папки внутри курса (это наши модули)
-    const moduleDirs = (await fetchRepoContent(coursePath)).filter(item => item.type === 'dir');
-    container.innerHTML = '';
+            // Получаем все папки внутри курса (это наши модули)
+            const moduleDirs = (await fetchRepoContent(coursePath)).filter(item => item.type === 'dir');
+            container.innerHTML = '';
 
-    for (const [i, dir] of moduleDirs.entries()) {
-        // Ищем описание в любом .txt файле внутри папки модуля
-        const rawInfo = await findInfoFile(dir.path);
-        const info = parseInfo(rawInfo, dir.name);
+            for (const [i, dir] of moduleDirs.entries()) {
+                // Ищем описание в любом .txt файле внутри папки модуля
+                const rawInfo = await findInfoFile(dir.path);
+                const info = parseInfo(rawInfo, dir.name);
 
-        // Ищем ПЕРВЫЙ попавшийся HTML файл в недрах папки модуля
-        const indexPath = await findAnyHtml(dir.path);
-        const finalUrl = indexPath ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${indexPath}` : '#';
+                // Ищем ПЕРВЫЙ попавшийся HTML файл в недрах папки модуля
+                const indexPath = await findAnyHtml(dir.path);
+                const finalUrl = indexPath ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${indexPath}` : '#';
 
-        const card = document.createElement('div');
-        card.className = 'pres-card';
-        card.style.animation = `containerFade 0.6s ease forwards ${i * 0.1}s`;
-        card.innerHTML = `
-            <div class="pres-img-box">${info.icon}</div>
-            <div>
-                <h3 style="margin:0 0 5px 0">${info.title}</h3>
-                <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${info.desc}</p>
-            </div>
-            <button class="start-btn" onclick="window.open('${finalUrl}', '_blank')">Открыть</button>
-        `;
-        container.appendChild(card);
-    }
-}
+                const card = document.createElement('div');
+                card.className = 'pres-card';
+                card.style.animation = `containerFade 0.6s ease forwards ${i * 0.1}s`;
+                card.innerHTML = `
+                    <div class="pres-img-box">${info.icon}</div>
+                    <div>
+                        <h3 style="margin:0 0 5px 0">${info.title}</h3>
+                        <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${info.desc}</p>
+                    </div>
+                    <button class="start-btn" onclick="window.open('${finalUrl}', '_blank')">Открыть</button>
+                `;
+             container.appendChild(card);
+            }
+        }
 
-// Универсальный парсер: разделит текст по '|', если он есть, или возьмет весь текст
-function parseInfo(text, folderName) {
-    if (!text) return { title: folderName, desc: 'Модуль обучения', icon: '📁' };
-    const parts = text.split('|').map(p => p.trim());
-    return {
-        title: parts[0] || folderName,
-        desc: parts[1] || 'Прогрессивные методики обучения',
-        icon: parts[2] || '📖'
-    };
-}
+        // Универсальный парсер: разделит текст по '|', если он есть, или возьмет весь текст
+        function parseInfo(text, folderName) {
+            if (!text) return { title: folderName, desc: 'Модуль обучения', icon: '📁' };
+            const parts = text.split('|').map(p => p.trim());
+            return {
+                title: parts[0] || folderName,
+                desc: parts[1] || 'Прогрессивные методики обучения',
+                icon: parts[2] || '📖'
+            };
+        }
     </script>
 </body>
-
 </html>
