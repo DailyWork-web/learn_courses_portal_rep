@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Portal Premium | Final Design</title>
+    <title>Study Portal Premium | Final Sync</title>
     <style>
         :root {
             --bg-main: #0a0a0a;
@@ -43,7 +43,7 @@
             transition: background-color 0.4s;
         }
 
-        /* --- BACKGROUND ENGINE --- */
+        /* --- BACKGROUND --- */
         .bg-wrapper {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -64,7 +64,6 @@
         .shape-1 { width: 500px; height: 500px; top: -10%; left: -10%; animation-duration: 6s; }
         .shape-2 { width: 400px; height: 400px; bottom: -10%; right: -10%; animation-duration: 8s; animation-delay: -2s; }
         .shape-3 { width: 300px; height: 300px; top: 40%; left: 60%; animation-duration: 5s; opacity: 0.2; }
-        .shape-4 { width: 450px; height: 450px; top: 10%; left: 30%; animation-duration: 12s; animation-delay: -4s; opacity: 0.15; }
 
         @keyframes move {
             0% { transform: translate(0, 0) scale(1) rotate(0deg); }
@@ -89,7 +88,7 @@
             position: absolute; right: -42px; top: 25px; width: 42px; height: 42px;
             background-color: var(--bg-sidebar); border: 1px solid var(--border); border-left: none;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
-            border-radius: 0 10px 10px 0; color: var(--text-title); font-weight: bold; transition: var(--transition);
+            border-radius: 0 10px 10px 0; color: var(--text-title); font-weight: bold;
         }
 
         .sidebar-content { padding: 40px 15px; width: var(--sidebar-width); height: 100%; display: flex; flex-direction: column; }
@@ -105,14 +104,14 @@
         .sidebar-nav-item:hover { color: var(--primary); background: rgba(255,255,255,0.03); }
 
         #courses-list { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; background: rgba(0,0,0,0.1); }
-        #courses-list.open { max-height: 500px; }
-        .course-btn { width: 100%; padding: 12px 20px; background: transparent; border: none; color: var(--text-body); text-align: left; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        #courses-list.open { max-height: 500px; overflow-y: auto; }
+        .course-btn { width: 100%; padding: 12px 20px; background: transparent; border: none; color: var(--text-body); text-align: left; cursor: pointer; font-size: 0.85rem; transition: 0.2s; display: block; }
         .course-btn:hover { color: var(--primary); padding-left: 25px; }
 
         .arrow-icon { font-size: 0.6rem; transition: transform 0.3s; opacity: 0.5; }
         .rotate { transform: rotate(180deg); }
 
-        /* --- SWITCH --- */
+        /* --- THEME SWITCH --- */
         .theme-section { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--line-color); }
         .switch-container { display: flex; align-items: center; justify-content: space-between; padding: 10px 5px; }
         .switch { position: relative; width: 34px; height: 18px; }
@@ -123,56 +122,37 @@
         input:checked + .slider:before { transform: translateX(16px); }
 
         /* --- CONTENT --- */
-        #main-content { flex-grow: 1; padding: 40px; overflow: hidden; width: 100%; position: relative; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        #main-content { flex-grow: 1; padding: 40px; overflow-y: auto; position: relative; display: flex; align-items: center; justify-content: center; z-index: 10; }
 
         .hero-container {
             position: relative; text-align: center; padding: 60px; border: 1px solid var(--border);
             background: var(--bg-card); backdrop-filter: blur(20px); border-radius: 30px;
             max-width: 800px; animation: containerFade 1.2s ease;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
-        }
-
-        .hero-container:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
         .hero-container h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); margin: 0; letter-spacing: -3px; font-weight: 800; text-transform: uppercase; }
         .hero-container h1 span { color: var(--primary); }
         .accent-line { height: 3px; width: 60px; background: var(--primary); margin: 25px auto; }
 
-        /* --- CARDS --- */
-        #course-view { display: none; max-width: 1000px; margin: 0 auto; width: 100%; height: 100%; overflow-y: auto; padding: 40px 20px; }
+        #course-view { display: none; max-width: 1000px; width: 100%; padding-bottom: 50px; }
         
         .pres-card { 
             display: grid; grid-template-columns: 140px 1fr 180px; background: var(--bg-card); 
             padding: 25px; margin-bottom: 20px; align-items: center; gap: 25px; 
             border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(15px);
-            transition: all 0.3s ease; opacity: 0;
+            transition: all 0.3s ease; opacity: 0; animation: containerFade 0.6s ease forwards;
         }
 
-        .pres-card:hover {
-            transform: scale(1.02) translateX(10px);
-            background: rgba(255,255,255,0.05);
-            border-color: var(--primary);
-        }
-
-        .pres-img-box { height: 90px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border-radius: 15px; transition: 0.3s; }
+        .pres-card:hover { transform: scale(1.02) translateX(10px); border-color: var(--primary); }
+        .pres-img-box { height: 90px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border-radius: 15px; }
         
         .start-btn { 
             background: var(--primary); color: white; border: none; padding: 14px; cursor: pointer; font-weight: 700; 
-            text-transform: uppercase; transition: all 0.3s; border-radius: 12px; font-size: 0.75rem; letter-spacing: 1px;
+            text-transform: uppercase; border-radius: 12px; font-size: 0.75rem; transition: 0.3s;
         }
-        .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(128, 0, 32, 0.4); }
+        .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); }
 
         @keyframes containerFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (max-width: 768px) {
-            .sidebar-container { position: fixed; height: 100%; }
-            .pres-card { grid-template-columns: 1fr; text-align: center; padding: 30px; }
-            .pres-img-box { margin: 0 auto; width: 80px; }
-        }
     </style>
 </head>
 <body>
@@ -181,7 +161,6 @@
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
         <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
     </div>
 
     <div class="sidebar-container">
@@ -190,8 +169,8 @@
                 <h2>Portal Premium</h2>
                 <button class="sidebar-nav-item" onclick="goHome(); toggleSidebar();">На главную</button>
                 <button class="sidebar-nav-item" onclick="toggleCourses()">Курсы <span id="arrow" class="arrow-icon">▼</span></button>
-                <div id="courses-list">
-                </div>
+                <div id="courses-list"></div>
+                
                 <div class="theme-section">
                     <div class="switch-container">
                         <span id="theme-text" style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase; opacity: 0.6;">Dark Mode</span>
@@ -211,18 +190,25 @@
             <div class="hero-container">
                 <h1>Study<span>Portal</span></h1>
                 <div class="accent-line"></div>
-                <p style="color: var(--text-body); font-size: 1.1rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">Ваше пространство для обучения нового поколения. Используйте меню слева для выбора образовательного трека.</p>
-                <div style="font-size: 0.6rem; color: var(--primary); letter-spacing: 4px; font-weight: bold; margin-top: 40px; text-transform: uppercase; opacity: 0.7;">Engineered for Excellence</div>
+                <p style="color: var(--text-body);">Выберите курс в меню слева для начала обучения.</p>
             </div>
         </div>
 
         <div id="course-view">
-            <h1 id="course-header" style="margin: 0 0 40px 0; font-size: 2.5rem; letter-spacing: -1px;">Курс</h1>
+            <h1 id="course-header" style="margin-bottom: 40px; font-size: 2.5rem;">Курс</h1>
             <div id="cards-container"></div>
         </div>
     </main>
 
     <script>
+        // === КОНФИГУРАЦИЯ (ЗАПОЛНИ СВОЕ) ===
+        const CONFIG = {
+            username: 'ТВОЙ_ЛОГИН', 
+            repo: 'ИМЯ_РЕПОЗИТОРИЯ',
+            branch: 'main'
+        };
+
+        // --- УПРАВЛЕНИЕ ИНТЕРФЕЙСОМ ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('sidebar-icon');
@@ -231,10 +217,8 @@
         }
 
         function toggleCourses() {
-            const list = document.getElementById('courses-list');
-            const arrow = document.getElementById('arrow');
-            list.classList.toggle('open');
-            arrow.classList.toggle('rotate');
+            document.getElementById('courses-list').classList.toggle('open');
+            document.getElementById('arrow').classList.toggle('rotate');
         }
 
         function updateTheme() {
@@ -243,128 +227,116 @@
             document.getElementById('theme-text').innerText = isLight ? 'Light Mode' : 'Dark Mode';
         }
 
-        function openCourse(name) {
-            if (window.innerWidth <= 768) toggleSidebar();
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('course-view').style.display = 'block';
-            document.getElementById('course-header').innerText = name;
-            const container = document.getElementById('cards-container');
-            container.innerHTML = '';
-            const icons = ['📖', '📑', '🔬'];
-            for(let i = 1; i <= 3; i++) {
-                const card = document.createElement('div');
-                card.className = 'pres-card';
-                card.style.animation = `containerFade 0.6s ease forwards ${i * 0.1}s`;
-                card.innerHTML = `<div class="pres-img-box">${icons[i-1]}</div><div><h3 style="margin:0 0 5px 0">Модуль №${i}</h3><p style="margin:0; font-size:0.85rem; color:var(--text-body)">Прогрессивные методики изучения.</p></div><button class="start-btn">Начать обучение</button>`;
-                container.appendChild(card);
-            }
-        }
-
         function goHome() {
             document.getElementById('welcome-screen').style.display = 'block';
             document.getElementById('course-view').style.display = 'none';
         }
 
+        // --- ЛОГИКА GITHUB (УМНАЯ ИЩЕЙКА) ---
+
+        // Глубокий поиск стартового файла в "куче"
+        async function findBestLaunchPath(path) {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${path}`);
+                const items = await res.json();
+
+                // 1. Ищем HTML (index/story/player)
+                const html = items.find(i => i.type === 'file' && i.name.toLowerCase().match(/(index|story|player|start)\.html$/));
+                if (html) return html.path;
+
+                // 2. Рекурсия по папкам
+                const subdirs = items.filter(i => i.type === 'dir');
+                for (let dir of subdirs) {
+                    const deep = await findBestLaunchPath(dir.path);
+                    if (deep) return deep;
+                }
+
+                // 3. Если только PDF
+                const pdf = items.find(i => i.type === 'file' && i.name.toLowerCase().endsWith('.pdf'));
+                if (pdf) return pdf.path;
+            } catch (e) { return null; }
+            return null;
+        }
+
+        async function loadSidebarData() {
+            const list = document.getElementById('courses-list');
+            try {
+                const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/`);
+                const items = await res.json();
+                const folders = items.filter(i => i.type === 'dir' && !i.name.startsWith('.'));
+                
+                list.innerHTML = '';
+                folders.forEach(f => {
+                    const btn = document.createElement('button');
+                    btn.className = 'course-btn';
+                    btn.innerText = f.name;
+                    btn.onclick = () => openCourse(f.name);
+                    list.appendChild(btn);
+                });
+            } catch (e) { list.innerHTML = '<p style="padding:10px; font-size:10px;">Ошибка API</p>'; }
+        }
+
+        async function openCourse(courseName) {
+            if (window.innerWidth <= 768) toggleSidebar();
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('course-view').style.display = 'block';
+            document.getElementById('course-header').innerText = courseName;
+            
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '<p style="color:var(--text-body); padding:20px;">Поиск материалов...</p>';
+
+            try {
+                const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseName)}`);
+                const moduleFolders = (await res.json()).filter(m => m.type === 'dir');
+                container.innerHTML = '';
+
+                for (let [index, mod] of moduleFolders.entries()) {
+                    const launchPath = await findBestLaunchPath(mod.path);
+                    
+                    // Получаем info.txt для описания
+                    const modRes = await fetch(mod.url);
+                    const modFiles = await modRes.json();
+                    const infoFile = modFiles.find(f => f.name.toLowerCase() === 'info.txt');
+
+                    let title = mod.name, desc = "Материалы модуля", link = "#", icon = '📄';
+
+                    if (launchPath) {
+                        if (launchPath.endsWith('.html')) {
+                            link = `https://${CONFIG.username}.github.io/${CONFIG.repo}/${encodeURIComponent(launchPath)}`;
+                            icon = '📦';
+                        } else {
+                            const fData = modFiles.find(f => f.path === launchPath) || {download_url: "#"};
+                            link = fData.download_url;
+                            if (launchPath.endsWith('.pdf')) {
+                                link = `https://docs.google.com/viewer?url=${encodeURIComponent(link)}&embedded=true`;
+                                icon = '📑';
+                            }
+                        }
+                    }
+
+                    if (infoFile) {
+                        const txt = await (await fetch(infoFile.download_url)).text();
+                        const lines = txt.split('\n');
+                        title = lines[0] || title; desc = lines[1] || desc;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'pres-card';
+                    card.style.animationDelay = `${index * 0.1}s`;
+                    card.innerHTML = `
+                        <div class="pres-img-box">${icon}</div>
+                        <div><h3 style="margin:0">${title}</h3><p style="margin:5px 0 0; font-size:0.85rem; color:var(--text-body)">${desc}</p></div>
+                        <button class="start-btn" onclick="window.open('${link}', '_blank')">Начать</button>
+                    `;
+                    container.appendChild(card);
+                }
+            } catch (e) { container.innerHTML = '<p>Ошибка загрузки.</p>'; }
+        }
+
         window.onload = () => {
+            loadSidebarData();
             document.getElementById('sidebar').classList.add('hidden');
         };
-        // НАСТРОЙКИ РЕПОЗИТОРИЯ
-        const CONFIG = {
-            username: 'DailyWork-web',
-            repo: 'learn_courses_portal_rep',
-            branch: 'main' 
-        };
-        // Вспомогательная функция для поиска файла запуска (index.html, story.html и т.д.)
-async function findLaunchFile(folderPath) {
-    try {
-        const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${folderPath}`);
-        const items = await res.json();
-        
-        // 1. Ищем HTML файлы в текущей папке
-        const htmlFile = items.find(i => i.type === 'file' && i.name.toLowerCase().match(/(index|story|player|start)\.html$/));
-        if (htmlFile) return htmlFile.path;
-
-        // 2. Если не нашли, заглядываем в подпапки (например, res/ или zip/)
-        const subFolders = items.filter(i => i.type === 'dir');
-        for (let sub of subFolders) {
-            const deepPath = await findLaunchFile(sub.path);
-            if (deepPath) return deepPath;
-        }
-    } catch (e) { return null; }
-    return null;
-}
-
-async function openCourse(folderName) {
-    if (window.innerWidth <= 768) toggleSidebar();
-    
-    document.getElementById('welcome-screen').style.display = 'none';
-    document.getElementById('course-view').style.display = 'block';
-    document.getElementById('course-header').innerText = folderName;
-    
-    const container = document.getElementById('cards-container');
-    container.innerHTML = '<p>Анализ структуры курса...</p>';
-
-    try {
-        const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(folderName)}`);
-        const modules = await res.json();
-        const moduleFolders = modules.filter(m => m.type === 'dir');
-
-        container.innerHTML = '';
-
-        for (let mod of moduleFolders) {
-            const modRes = await fetch(mod.url);
-            const files = await modRes.json();
-            
-            const infoFile = files.find(f => f.name.toLowerCase() === 'info.txt');
-            const scormFolder = files.find(f => f.type === 'dir');
-            const studyFile = files.find(f => f.name.toLowerCase() !== 'info.txt' && f.type === 'file');
-
-            let title = mod.name;
-            let desc = "Запуск модуля...";
-            let finalLink = "#";
-
-            // УМНЫЙ ПОИСК ССЫЛКИ
-            if (scormFolder) {
-                // Запускаем глубокий поиск стартового HTML файла
-                const launchPath = await findLaunchFile(scormFolder.path);
-                if (launchPath) {
-                    finalLink = `https://${CONFIG.username}.github.io/${CONFIG.repo}/${encodeURIComponent(launchPath)}`;
-                }
-            } else if (studyFile) {
-                finalLink = studyFile.download_url;
-                if (studyFile.name.match(/\.(pdf|doc|docx|ppt|pptx)$/i)) {
-                    finalLink = `https://docs.google.com/viewer?url=${encodeURIComponent(studyFile.download_url)}&embedded=true`;
-                }
-            }
-
-            if (infoFile) {
-                const infoTxt = await (await fetch(infoFile.download_url)).text();
-                const lines = infoTxt.split('\n');
-                title = lines[0] || title;
-                desc = lines[1] || desc;
-            }
-
-            const card = document.createElement('div');
-            card.className = 'pres-card';
-            card.innerHTML = `
-                <div class="pres-img-box">${scormFolder ? '📦' : '📄'}</div>
-                <div>
-                    <h3 style="margin:0">${title}</h3>
-                    <p style="margin:5px 0 0; font-size:0.85rem; color:var(--text-body)">${desc}</p>
-                </div>
-                <button class="start-btn" onclick="window.open('${finalLink}', '_blank')">Начать</button>
-            `;
-            container.appendChild(card);
-        }
-    } catch (e) {
-        container.innerHTML = 'Ошибка при чтении структуры GitHub.';
-    }
-}
     </script>
 </body>
 </html>
-
-
-
-
-
