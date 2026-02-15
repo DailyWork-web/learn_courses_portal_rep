@@ -374,21 +374,23 @@
             }
         }
 
-        function parseInfo(text, folderName) {
-            if (!text) return { title: folderName, desc: 'Интерактивный контент', icon: '📁' };
-            const parts = text.split('|').map(p => p.trim());
-            return { title: parts[0] || folderName, desc: parts[1] || 'Модуль обучения', icon: parts[2] || '📖' };
-        }
+       function parseInfo(text, folderName) {
+    // Если файла нет, возвращаем стандартные значения
+    if (!text) return { title: folderName, desc: 'Интерактивный контент', icon: '📁' };
 
-        function goHome() {
-            document.getElementById('welcome-screen').style.display = 'block';
-            document.getElementById('course-view').style.display = 'none';
-        }
+    // Разбиваем текст на массив строк и убираем лишние пробелы по краям каждой строки
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-        window.onload = () => {
-            document.getElementById('sidebar').classList.add('hidden');
-            initPortal();
-        };
+    return {
+        // Первая строка — это заголовок (если пусто, берем имя папки)
+        title: lines[0] || folderName, 
+        // Вторая строка — описание (если пусто, ставим заглушку)
+        desc: lines[1] || 'Модуль обучения', 
+        // Иконку можно оставить в третьей строке или задать статично
+        icon: lines[2] || '📖' 
+    };
+}
     </script>
 </body>
 </html>
+
