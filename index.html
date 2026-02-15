@@ -143,12 +143,6 @@
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
         }
 
-        .hero-container:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
         .hero-container h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); margin: 0; letter-spacing: -3px; font-weight: 800; text-transform: uppercase; }
         .hero-container h1 span { color: var(--primary); }
         .accent-line { height: 3px; width: 60px; background: var(--primary); margin: 25px auto; }
@@ -242,11 +236,10 @@
     </main>
 
     <script>
-        // АВТО-КОНФИГ: Извлекает данные из URL текущей страницы
-        const pathParts = window.location.pathname.split('/').filter(p => p);
+        // CONFIG: Пропиши здесь данные клиента для стабильной работы на всех устройствах
         const CONFIG = {
-            owner: window.location.hostname.split('.')[0],
-            repo: pathParts[0] || '', 
+            owner: 'DailyWork-web', 
+            repo: 'learn_courses_portal_rep', 
             branch: 'main'
         };
 
@@ -279,17 +272,28 @@
         }
 
         async function initPortal() {
+            const sidebarList = document.getElementById('courses-list');
             try {
                 const response = await fetch(GITHUB_API_URL);
+                
+                if (!response.ok) {
+                    if (response.status === 403) throw new Error("Лимит GitHub API исчерпан. Попробуйте через час.");
+                    if (response.status === 404) throw new Error("Репозиторий не найден. Проверьте CONFIG.");
+                    throw new Error("Ошибка сети: " + response.status);
+                }
+
                 const data = await response.json();
-                if (!data.tree) return;
+                if (!data.tree) throw new Error("Дерево файлов пустое");
                 
                 repoTree = data.tree;
                 const courses = repoTree.filter(item => item.type === 'tree' && !item.path.includes('/'));
                 
-                const sidebarList = document.getElementById('courses-list');
-                sidebarList.innerHTML = '';
+                if (courses.length === 0) {
+                    sidebarList.innerHTML = '<p style="color:gray; font-size:10px; padding:10px;">Курсы не найдены в корне репозитория</p>';
+                    return;
+                }
 
+                sidebarList.innerHTML = '';
                 courses.forEach(course => {
                     const btn = document.createElement('button');
                     btn.className = 'course-btn';
@@ -297,8 +301,10 @@
                     btn.onclick = () => openCourse(course.path, course.path);
                     sidebarList.appendChild(btn);
                 });
+
             } catch (e) {
-                console.error("Portal Init Error:", e);
+                console.error(e);
+                sidebarList.innerHTML = `<p style="color:#ff4d4d; font-size:10px; padding:10px;">${e.message}</p>`;
             }
         }
 
@@ -309,7 +315,7 @@
             document.getElementById('course-header').innerText = name;
             
             const container = document.getElementById('cards-container');
-            const loadingPhrases = ["Синхронизация...", "Анализ структуры...", "Сборка модулей..."];
+            const loadingPhrases = ["Синхронизация...", "Анализ структуры...", "Подготовка модулей..."];
             container.innerHTML = `<p class="loading-text" id="loader-msg">${loadingPhrases[0]}</p>`;
             
             let pIdx = 0;
@@ -339,7 +345,7 @@
                     try {
                         const r = await fetch(rawUrl);
                         if (r.ok) infoText = await r.text();
-                    } catch (e) { console.warn("Info.txt load failed"); }
+                    } catch (e) {}
                 }
 
                 const parsed = parseInfo(infoText, mod.path.split('/').pop());
@@ -364,16 +370,14 @@
             }
         }
 
-        // ПАРСИНГ INFO.TXT: 1-я строка заголовок, 2-я описание, 3-я эмодзи
+        // ПАРСИНГ: 1-я строка заголовок, 2-я описание, 3-я иконка
         function parseInfo(text, folderName) {
             const result = { title: folderName, desc: 'Модуль обучения', icon: '📖' };
             if (!text) return result;
-
             const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length >= 1) result.title = lines[0];
             if (lines.length >= 2) result.desc = lines[1];
             if (lines.length >= 3) result.icon = lines[2];
-
             return result;
         }
 
