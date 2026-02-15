@@ -301,7 +301,6 @@
         const container = document.getElementById('cards-container');
         container.innerHTML = `<p class="loading-text">Поиск файлов в ${name}...</p>`;
 
-        // 1. Находим только папки модулей внутри выбранного курса
         const modules = repoTree.filter(item => 
             item.type === 'tree' && 
             item.path.startsWith(path + '/') && 
@@ -310,12 +309,15 @@
 
         container.innerHTML = '';
 
+        // --- ИСПРАВЛЕНИЕ БАЗОВОГО URL ДЛЯ RUBYMARKET.GITHUB.IO ---
+        const isPrimaryRepo = CONFIG.repo.toLowerCase() === `${CONFIG.owner}.github.io`.toLowerCase();
+        const baseUrl = isPrimaryRepo 
+            ? `https://${CONFIG.owner}.github.io` 
+            : `https://${CONFIG.owner}.github.io/${CONFIG.repo}`;
+
         for (const [index, mod] of modules.entries()) {
-            // 2. Ищем файлы СТРОГО внутри пути текущего модуля (напр. "Курс/Модуль1/")
             const allModFiles = repoTree.filter(f => f.path.startsWith(mod.path + '/'));
             
-            // 3. Ищем HTML файл именно внутри этого модуля
-            // Игнорируем технические файлы и ищем index.html или любой другой
             const htmlFile = allModFiles.find(f => 
                 f.path.toLowerCase().endsWith('.html') && 
                 f.type === 'blob' &&
@@ -335,11 +337,10 @@
 
             const parsed = parseInfo(infoText, mod.path.split('/').pop());
             
-            // 4. Генерируем ссылку. Если htmlFile найден, он ВСЕГДА будет внутри папки модуля.
-            const finalUrl = htmlFile ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${htmlFile.path}` : null;
+            // --- ГЕНЕРАЦИЯ ПРЯМОЙ ССЫЛКИ БЕЗ ОШИБКИ 404 ---
+            const finalUrl = htmlFile ? `${baseUrl}/${htmlFile.path}` : null;
             
-            // Лог для проверки (заказчик может прислать скрин консоли)
-            if (finalUrl) console.log(`Модуль: ${mod.path} -> Найден HTML: ${htmlFile.path}`);
+            if (finalUrl) console.log(`Курс: ${name} | Файл: ${htmlFile.path}`);
 
             const card = document.createElement('div');
             card.className = 'pres-card';
@@ -352,7 +353,7 @@
                     <h3 style="margin:0 0 5px 0">${parsed.title}</h3>
                     <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${parsed.desc}</p>
                 </div>
-                <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML файл не найден внутри папки этого модуля!')" }">
+                <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML не найден')" }">
                     ${finalUrl ? 'Запустить' : 'Нет HTML'}
                 </button>
             `;
@@ -362,7 +363,7 @@
 
     function parseInfo(text, folderName) {
         const result = { title: folderName, desc: 'Интерактивный модуль', icon: '📁' };
-        if (!text) return result;
+        if (!text || text.trim() === "") return result; // Защита от пустого info.txt
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length >= 1) result.title = lines[0];
         if (lines.length >= 2) result.desc = lines[1];
@@ -379,6 +380,3 @@
     </script>
 </body>
 </html>
-
-
-
