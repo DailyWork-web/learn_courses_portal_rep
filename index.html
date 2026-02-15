@@ -319,76 +319,85 @@
         }
 
         // Интерактивная загрузка курса
-        async function openCourse(path, name) {
-            if (window.innerWidth <= 768) toggleSidebar();
-            document.getElementById('welcome-screen').style.display = 'none';
-            document.getElementById('course-view').style.display = 'block';
-            document.getElementById('course-header').innerText = name;
+        async function openCourse(courseName) {
+    if (window.innerWidth <= 768) toggleSidebar();
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('course-view').style.display = 'block';
+    document.getElementById('course-header').innerText = courseName;
+    
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '<p style="text-align:center; opacity:0.6;">Сканирование материалов...</p>';
+
+    try {
+        const res = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(courseName)}`);
+        const moduleFolders = (await res.json()).filter(m => m.type === 'dir');
+        container.innerHTML = '';
+
+        for (let [index, mod] of moduleFolders.entries()) {
+            const launchPath = await findBestLaunchPath(mod.path);
             
-            const container = document.getElementById('cards-container');
+            // Получаем список файлов в модуле, чтобы найти info.txt
+            const modRes = await fetch(`https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${encodeURIComponent(mod.path)}`);
+            const modFiles = await modRes.json();
+            const infoFile = modFiles.find(f => f.name.toLowerCase() === 'info.txt');
+
+            // Значения по умолчанию
+            let title = mod.name; 
+            let desc = "Нажмите для начала обучения"; 
+            let link = "#"; 
+            let icon = '📄';
             
-            // Массив фраз для живой загрузки
-            const loadingPhrases = ["Синхронизация с GitHub...", "Ищем активные модули...", "Парсинг данных...", "Почти готово..."];
-            let phraseIdx = 0;
-            
-            container.innerHTML = `<p class="loading-text" id="loader-msg">${loadingPhrases[0]}</p>`;
-            const loaderInterval = setInterval(() => {
-                phraseIdx = (phraseIdx + 1) % loadingPhrases.length;
-                const msg = document.getElementById('loader-msg');
-                if(msg) msg.innerText = loadingPhrases[phraseIdx];
-            }, 800);
-
-            const moduleItems = await fetchRepoContent(path);
-            if (!moduleItems) { clearInterval(loaderInterval); return; }
-
-            const modules = moduleItems.filter(i => i.type === 'dir');
-            clearInterval(loaderInterval);
-            container.innerHTML = '';
-
-            for (const [index, modDir] of modules.entries()) {
-                const contentInModule = await fetchRepoContent(modDir.path);
-                const infoFile = contentInModule.find(f => f.name.toLowerCase().endsWith('.txt'));
-                let infoText = "";
-                if (infoFile) infoText = await fetch(infoFile.download_url).then(r => r.text());
-
-                const parsed = parseInfo(infoText, modDir.name);
-                const indexPath = await findHtmlRecursive(modDir.path);
-                const finalUrl = indexPath ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${indexPath}` : null;
-
-                const card = document.createElement('div');
-                card.className = 'pres-card';
-                card.style.animation = `containerFade 0.6s ease forwards ${index * 0.15}s`;
-                card.style.opacity = "1";
-                
-                card.innerHTML = `
-                    <div class="pres-img-box">${parsed.icon}</div>
-                    <div>
-                        <h3 style="margin:0 0 5px 0">${parsed.title}</h3>
-                        <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${parsed.desc}</p>
-                    </div>
-                    <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML не найден')" }">
-                        ${finalUrl ? 'Запустить' : 'Нет файла'}
-                    </button>
-                `;
-                container.appendChild(card);
+            // Определяем ссылку и иконку
+            if (launchPath) {
+                if (launchPath.endsWith('.html')) {
+                    link = `https://${CONFIG.username}.github.io/${CONFIG.repo}/${encodeURIComponent(launchPath)}`;
+                    icon = '📦';
+                } else {
+                    const fData = modFiles.find(f => f.path === launchPath);
+                    link = fData ? fData.download_url : "#";
+                    if (launchPath.endsWith('.pdf')) {
+                        link = `https://docs.google.com/viewer?url=${encodeURIComponent(link)}&embedded=true`;
+                        icon = '📑';
+                    }
+                }
             }
-        }
 
-        function parseInfo(text, folderName) {
-            if (!text) return { title: folderName, desc: 'Интерактивный контент', icon: '📁' };
-            const parts = text.split('|').map(p => p.trim());
-            return { title: parts[0] || folderName, desc: parts[1] || 'Модуль обучения', icon: parts[2] || '📖' };
-        }
+            // --- ЛОГИКА ЧТЕНИЯ INFO.TXT ---
+            if (infoFile) {
+                try {
+                    const response = await fetch(infoFile.download_url);
+                    const text = await response.text();
+                    const lines = text.split(/\r?\n/); // Разбиваем по переносу строки
+                    
+                    if (lines[0] && lines[0].trim() !== "") {
+                        title = lines[0].trim(); // 1-я строка -> Заголовок
+                    }
+                    if (lines[1] && lines[1].trim() !== "") {
+                        desc = lines[1].trim();  // 2-я строка -> Описание
+                    }
+                } catch (err) {
+                    console.error("Ошибка чтения info.txt:", err);
+                }
+            }
 
-        function goHome() {
-            document.getElementById('welcome-screen').style.display = 'block';
-            document.getElementById('course-view').style.display = 'none';
+            const card = document.createElement('div');
+            card.className = 'pres-card';
+            card.style.animationDelay = `${index * 0.15}s`;
+            card.innerHTML = `
+                <div class="pres-img-box">${icon}</div>
+                <div>
+                    <h3 style="margin:0">${title}</h3>
+                    <p style="margin:5px 0 0; font-size:0.85rem; color:var(--text-body)">${desc}</p>
+                </div>
+                <button class="start-btn" onclick="window.open('${link}', '_blank')">Начать</button>
+            `;
+            container.appendChild(card);
         }
-
-        window.onload = () => {
-            document.getElementById('sidebar').classList.add('hidden');
-            initPortal();
-        };
+    } catch (e) { 
+        container.innerHTML = '<p style="text-align:center;">Ошибка загрузки структуры курса.</p>'; 
+    }
+}
     </script>
 </body>
 </html>
+
