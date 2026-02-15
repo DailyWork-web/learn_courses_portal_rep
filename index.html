@@ -350,7 +350,6 @@
 
                 const parsed = parseInfo(infoText, mod.path.split('/').pop());
                 const finalUrl = htmlFile ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${htmlFile.path}` : null;
-
                 const card = document.createElement('div');
                 card.className = 'pres-card';
                 card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
@@ -390,3 +389,4 @@
     </script>
 </body>
 </html>
+
