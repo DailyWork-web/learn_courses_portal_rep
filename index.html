@@ -15,7 +15,6 @@
             --primary-hover: #a20029;
             --border: rgba(255, 255, 255, 0.1);
             --line-color: #222222;
-            /* Улучшенный переход для плавности */
             --transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             --sidebar-width: 280px;
         }
@@ -178,12 +177,12 @@
         }
         .start-btn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(128, 0, 32, 0.4); }
 
-        /* Лоадер-надпись */
         .loading-text {
             color: var(--text-body);
             font-size: 0.9rem;
             letter-spacing: 1px;
             animation: pulseText 1.5s infinite;
+            text-align: center;
         }
 
         @keyframes pulseText { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
@@ -211,8 +210,7 @@
                 <h2>Portal Premium</h2>
                 <button class="sidebar-nav-item" onclick="goHome(); toggleSidebar();">На главную</button>
                 <button class="sidebar-nav-item" onclick="toggleCourses()">Курсы <span id="arrow" class="arrow-icon">▼</span></button>
-                <div id="courses-list">
-                    </div>
+                <div id="courses-list"></div>
                 <div class="theme-section">
                     <div class="switch-container">
                         <span id="theme-text" style="font-size: 0.65rem; font-weight: bold; text-transform: uppercase; opacity: 0.6;">Dark Mode</span>
@@ -232,7 +230,7 @@
             <div class="hero-container">
                 <h1>Study<span>Portal</span></h1>
                 <div class="accent-line"></div>
-                <p style="color: var(--text-body); font-size: 1.1rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">Ваше пространство для обучения нового поколения. Используйте меню слева для выбора образовательного трека.</p>
+                <p style="color: var(--text-body); font-size: 1.1rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">Ваше пространство для обучения нового поколения. Используйте меню слева для выбора трека.</p>
                 <div style="font-size: 0.6rem; color: var(--primary); letter-spacing: 4px; font-weight: bold; margin-top: 40px; text-transform: uppercase; opacity: 0.7;">Engineered for Excellence</div>
             </div>
         </div>
@@ -244,16 +242,18 @@
     </main>
 
     <script>
+        // АВТО-КОНФИГ: Извлекает данные из URL текущей страницы
+        const pathParts = window.location.pathname.split('/').filter(p => p);
         const CONFIG = {
-            owner: 'DailyWork-web', 
-            repo: 'learn_courses_portal_rep', 
-            branch: 'main', 
-            token: '' 
+            owner: window.location.hostname.split('.')[0],
+            repo: pathParts[0] || '', 
+            branch: 'main'
         };
 
-        const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
+        const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/git/trees/${CONFIG.branch}?recursive=1`;
+        
+        let repoTree = []; 
 
-        // Плавное управление боковым меню
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const icon = document.getElementById('sidebar-icon');
@@ -266,59 +266,42 @@
             const arrow = document.getElementById('arrow');
             list.classList.toggle('open');
             arrow.classList.toggle('rotate');
-            
-            // Плавное появление кнопок внутри
             const btns = list.querySelectorAll('.course-btn');
             btns.forEach((btn, idx) => {
                 btn.style.transitionDelay = list.classList.contains('open') ? `${idx * 0.05}s` : '0s';
             });
         }
 
-        // Плавная смена тем
         function updateTheme() {
             const isLight = document.getElementById('theme-toggle').checked;
             document.body.setAttribute('data-theme', isLight ? 'light' : 'dark');
             document.getElementById('theme-text').innerText = isLight ? 'Light Mode' : 'Dark Mode';
         }
 
-        // GitHub API логика (неизменная)
-        async function fetchRepoContent(path = '') {
-            const url = `${GITHUB_API_URL}/${path}?ref=${CONFIG.branch}`;
-            const response = await fetch(url, {
-                headers: CONFIG.token ? { 'Authorization': `token ${CONFIG.token}` } : {}
-            });
-            return response.ok ? await response.json() : null;
-        }
-
-        async function findHtmlRecursive(path) {
-            const items = await fetchRepoContent(path);
-            if (!items || !Array.isArray(items)) return null;
-            const htmlFile = items.find(f => f.name.toLowerCase().endsWith('.html'));
-            if (htmlFile) return htmlFile.path;
-            const dirs = items.filter(i => i.type === 'dir');
-            for (const d of dirs) {
-                const found = await findHtmlRecursive(d.path);
-                if (found) return found;
-            }
-            return null;
-        }
-
         async function initPortal() {
-            const rootItems = await fetchRepoContent('');
-            if (!rootItems) return;
-            const sidebarList = document.getElementById('courses-list');
-            sidebarList.innerHTML = '';
-            const courses = rootItems.filter(item => item.type === 'dir');
-            for (const course of courses) {
-                const btn = document.createElement('button');
-                btn.className = 'course-btn';
-                btn.innerText = course.name;
-                btn.onclick = () => openCourse(course.path, course.name);
-                sidebarList.appendChild(btn);
+            try {
+                const response = await fetch(GITHUB_API_URL);
+                const data = await response.json();
+                if (!data.tree) return;
+                
+                repoTree = data.tree;
+                const courses = repoTree.filter(item => item.type === 'tree' && !item.path.includes('/'));
+                
+                const sidebarList = document.getElementById('courses-list');
+                sidebarList.innerHTML = '';
+
+                courses.forEach(course => {
+                    const btn = document.createElement('button');
+                    btn.className = 'course-btn';
+                    btn.innerText = course.path;
+                    btn.onclick = () => openCourse(course.path, course.path);
+                    sidebarList.appendChild(btn);
+                });
+            } catch (e) {
+                console.error("Portal Init Error:", e);
             }
         }
 
-        // Интерактивная загрузка курса
         async function openCourse(path, name) {
             if (window.innerWidth <= 768) toggleSidebar();
             document.getElementById('welcome-screen').style.display = 'none';
@@ -326,38 +309,45 @@
             document.getElementById('course-header').innerText = name;
             
             const container = document.getElementById('cards-container');
-            
-            // Массив фраз для живой загрузки
-            const loadingPhrases = ["Синхронизация с GitHub...", "Ищем активные модули...", "Парсинг данных...", "Почти готово..."];
-            let phraseIdx = 0;
-            
+            const loadingPhrases = ["Синхронизация...", "Анализ структуры...", "Сборка модулей..."];
             container.innerHTML = `<p class="loading-text" id="loader-msg">${loadingPhrases[0]}</p>`;
-            const loaderInterval = setInterval(() => {
-                phraseIdx = (phraseIdx + 1) % loadingPhrases.length;
+            
+            let pIdx = 0;
+            const interval = setInterval(() => {
+                pIdx = (pIdx + 1) % loadingPhrases.length;
                 const msg = document.getElementById('loader-msg');
-                if(msg) msg.innerText = loadingPhrases[phraseIdx];
-            }, 800);
+                if(msg) msg.innerText = loadingPhrases[pIdx];
+            }, 600);
 
-            const moduleItems = await fetchRepoContent(path);
-            if (!moduleItems) { clearInterval(loaderInterval); return; }
+            const modules = repoTree.filter(item => 
+                item.type === 'tree' && 
+                item.path.startsWith(path + '/') && 
+                item.path.split('/').length === 2
+            );
 
-            const modules = moduleItems.filter(i => i.type === 'dir');
-            clearInterval(loaderInterval);
+            clearInterval(interval);
             container.innerHTML = '';
 
-            for (const [index, modDir] of modules.entries()) {
-                const contentInModule = await fetchRepoContent(modDir.path);
-                const infoFile = contentInModule.find(f => f.name.toLowerCase().endsWith('.txt'));
-                let infoText = "";
-                if (infoFile) infoText = await fetch(infoFile.download_url).then(r => r.text());
+            for (const [index, mod] of modules.entries()) {
+                const modContent = repoTree.filter(f => f.path.startsWith(mod.path + '/'));
+                const htmlFile = modContent.find(f => f.path.toLowerCase().endsWith('.html'));
+                const infoFile = modContent.find(f => f.path.toLowerCase().endsWith('.txt'));
 
-                const parsed = parseInfo(infoText, modDir.name);
-                const indexPath = await findHtmlRecursive(modDir.path);
-                const finalUrl = indexPath ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${indexPath}` : null;
+                let infoText = "";
+                if (infoFile) {
+                    const rawUrl = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${infoFile.path}`;
+                    try {
+                        const r = await fetch(rawUrl);
+                        if (r.ok) infoText = await r.text();
+                    } catch (e) { console.warn("Info.txt load failed"); }
+                }
+
+                const parsed = parseInfo(infoText, mod.path.split('/').pop());
+                const finalUrl = htmlFile ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${htmlFile.path}` : null;
 
                 const card = document.createElement('div');
                 card.className = 'pres-card';
-                card.style.animation = `containerFade 0.6s ease forwards ${index * 0.15}s`;
+                card.style.animation = `containerFade 0.6s ease forwards ${index * 0.1}s`;
                 card.style.opacity = "1";
                 
                 card.innerHTML = `
@@ -366,7 +356,7 @@
                         <h3 style="margin:0 0 5px 0">${parsed.title}</h3>
                         <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${parsed.desc}</p>
                     </div>
-                    <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML не найден')" }">
+                    <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML файл не найден')" }">
                         ${finalUrl ? 'Запустить' : 'Нет файла'}
                     </button>
                 `;
@@ -374,10 +364,17 @@
             }
         }
 
+        // ПАРСИНГ INFO.TXT: 1-я строка заголовок, 2-я описание, 3-я эмодзи
         function parseInfo(text, folderName) {
-            if (!text) return { title: folderName, desc: 'Интерактивный контент', icon: '📁' };
-            const parts = text.split('|').map(p => p.trim());
-            return { title: parts[0] || folderName, desc: parts[1] || 'Модуль обучения', icon: parts[2] || '📖' };
+            const result = { title: folderName, desc: 'Модуль обучения', icon: '📖' };
+            if (!text) return result;
+
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length >= 1) result.title = lines[0];
+            if (lines.length >= 2) result.desc = lines[1];
+            if (lines.length >= 3) result.icon = lines[2];
+
+            return result;
         }
 
         function goHome() {
@@ -385,10 +382,7 @@
             document.getElementById('course-view').style.display = 'none';
         }
 
-        window.onload = () => {
-            document.getElementById('sidebar').classList.add('hidden');
-            initPortal();
-        };
+        window.onload = initPortal;
     </script>
 </body>
 </html>
