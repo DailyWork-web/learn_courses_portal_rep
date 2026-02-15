@@ -242,15 +242,14 @@
     </main>
 
     <script>
-    // Явно прописываем данные, чтобы на чужих устройствах не было ошибок распознавания
+    // CONFIG: Данные репозитория
     const CONFIG = {
-        owner: 'DailyWork-web', 
-        repo: 'learn_courses_portal_rep', 
+        owner: 'rubymarket', 
+        repo: 'rubymarket.github.io', 
         branch: 'main'
     };
 
     const GITHUB_API_URL = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/git/trees/${CONFIG.branch}?recursive=1`;
-    
     let repoTree = []; 
 
     function toggleSidebar() {
@@ -262,44 +261,24 @@
 
     function toggleCourses() {
         const list = document.getElementById('courses-list');
-        const arrow = document.getElementById('arrow');
         list.classList.toggle('open');
-        arrow.classList.toggle('rotate');
-        const btns = list.querySelectorAll('.course-btn');
-        btns.forEach((btn, idx) => {
-            btn.style.transitionDelay = list.classList.contains('open') ? `${idx * 0.05}s` : '0s';
-        });
+        document.getElementById('arrow').classList.toggle('rotate');
     }
 
     function updateTheme() {
         const isLight = document.getElementById('theme-toggle').checked;
         document.body.setAttribute('data-theme', isLight ? 'light' : 'dark');
-        document.getElementById('theme-text').innerText = isLight ? 'Light Mode' : 'Dark Mode';
     }
 
     async function initPortal() {
         const sidebarList = document.getElementById('courses-list');
         try {
             const response = await fetch(GITHUB_API_URL);
-            
-            if (!response.ok) {
-                if (response.status === 403) throw new Error("Лимит GitHub API исчерпан. Попробуйте через час.");
-                if (response.status === 404) throw new Error("Репозиторий не найден. Проверьте CONFIG.");
-                throw new Error("Ошибка сети: " + response.status);
-            }
-
+            if (!response.ok) throw new Error("API Error: " + response.status);
             const data = await response.json();
-            if (!data.tree) throw new Error("Дерево файлов пустое");
-            
             repoTree = data.tree;
-            // Фильтруем только папки в корне
-            const courses = repoTree.filter(item => item.type === 'tree' && !item.path.includes('/'));
-            
-            if (courses.length === 0) {
-                sidebarList.innerHTML = '<p style="color:gray; font-size:10px; padding:10px;">Курсы не найдены в корне репозитория</p>';
-                return;
-            }
 
+            const courses = repoTree.filter(item => item.type === 'tree' && !item.path.includes('/'));
             sidebarList.innerHTML = '';
             courses.forEach(course => {
                 const btn = document.createElement('button');
@@ -308,10 +287,8 @@
                 btn.onclick = () => openCourse(course.path, course.path);
                 sidebarList.appendChild(btn);
             });
-
         } catch (e) {
-            console.error(e);
-            sidebarList.innerHTML = `<p style="color:#ff4d4d; font-size:10px; padding:10px;">${e.message}</p>`;
+            sidebarList.innerHTML = `<p style="color:red; font-size:10px; padding:10px;">${e.message}</p>`;
         }
     }
 
@@ -322,8 +299,9 @@
         document.getElementById('course-header').innerText = name;
         
         const container = document.getElementById('cards-container');
-        container.innerHTML = `<p class="loading-text">Загрузка данных...</p>`;
+        container.innerHTML = `<p class="loading-text">Поиск файлов в ${name}...</p>`;
 
+        // 1. Находим только папки модулей внутри выбранного курса
         const modules = repoTree.filter(item => 
             item.type === 'tree' && 
             item.path.startsWith(path + '/') && 
@@ -333,9 +311,18 @@
         container.innerHTML = '';
 
         for (const [index, mod] of modules.entries()) {
-            const modContent = repoTree.filter(f => f.path.startsWith(mod.path + '/'));
-            const htmlFile = modContent.find(f => f.path.toLowerCase().endsWith('.html'));
-            const infoFile = modContent.find(f => f.path.toLowerCase().endsWith('.txt'));
+            // 2. Ищем файлы СТРОГО внутри пути текущего модуля (напр. "Курс/Модуль1/")
+            const allModFiles = repoTree.filter(f => f.path.startsWith(mod.path + '/'));
+            
+            // 3. Ищем HTML файл именно внутри этого модуля
+            // Игнорируем технические файлы и ищем index.html или любой другой
+            const htmlFile = allModFiles.find(f => 
+                f.path.toLowerCase().endsWith('.html') && 
+                f.type === 'blob' &&
+                !f.path.includes('google-analytics')
+            );
+
+            const infoFile = allModFiles.find(f => f.path.toLowerCase().endsWith('info.txt'));
 
             let infoText = "";
             if (infoFile) {
@@ -347,7 +334,12 @@
             }
 
             const parsed = parseInfo(infoText, mod.path.split('/').pop());
+            
+            // 4. Генерируем ссылку. Если htmlFile найден, он ВСЕГДА будет внутри папки модуля.
             const finalUrl = htmlFile ? `https://${CONFIG.owner}.github.io/${CONFIG.repo}/${htmlFile.path}` : null;
+            
+            // Лог для проверки (заказчик может прислать скрин консоли)
+            if (finalUrl) console.log(`Модуль: ${mod.path} -> Найден HTML: ${htmlFile.path}`);
 
             const card = document.createElement('div');
             card.className = 'pres-card';
@@ -360,8 +352,8 @@
                     <h3 style="margin:0 0 5px 0">${parsed.title}</h3>
                     <p style="margin:0; font-size:0.85rem; color:var(--text-body)">${parsed.desc}</p>
                 </div>
-                <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML файл не найден')" }">
-                    ${finalUrl ? 'Запустить' : 'Нет файла'}
+                <button class="start-btn" onclick="${finalUrl ? `window.open('${finalUrl}', '_blank')` : "alert('HTML файл не найден внутри папки этого модуля!')" }">
+                    ${finalUrl ? 'Запустить' : 'Нет HTML'}
                 </button>
             `;
             container.appendChild(card);
@@ -369,7 +361,7 @@
     }
 
     function parseInfo(text, folderName) {
-        const result = { title: folderName, desc: 'Модуль обучения', icon: '📖' };
+        const result = { title: folderName, desc: 'Интерактивный модуль', icon: '📁' };
         if (!text) return result;
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length >= 1) result.title = lines[0];
@@ -387,4 +379,5 @@
     </script>
 </body>
 </html>
+
 
